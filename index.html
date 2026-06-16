@@ -74,6 +74,20 @@
     .input-underline:focus-within::after {
       width: 100%;
     }
+
+    /* Dark-mode contrast: lift muted greys so secondary text passes WCAG AA on dark backgrounds */
+    html.dark .text-gray-400 { color: #cbd5e1 !important; } /* slate-300 */
+    html.dark .text-gray-500 { color: #94a3b8 !important; } /* slate-400 */
+    html.dark .text-gray-600 { color: #cbd5e1 !important; }
+    html.dark .text-gray-700 { color: #e5e7eb !important; }
+    html.dark .placeholder\:text-gray-400::placeholder,
+    html.dark .placeholder\:text-gray-500::placeholder { color: #94a3b8 !important; }
+    html.dark ::placeholder { color: #94a3b8; opacity: 1; }
+    /* Stronger borders so cards/inputs stay visible against near-black surfaces */
+    html.dark .border-gray-100 { border-color: #1f2937 !important; }
+    html.dark .border-gray-200 { border-color: #27272a !important; }
+    /* Readable hover labels in dark sidebar/menus */
+    html.dark .text-gray-300 { color: #e5e7eb !important; }
   </style>
 </head>
 
