@@ -10,7 +10,7 @@ interface QuotesPageProps {
 }
 
 export const QuotesPage: React.FC<QuotesPageProps> = ({ searchQuery, onNavigate }) => {
-    const { items: quotes } = useQuotes();
+    const { items: quotes, create: createQuote, remove: removeQuote } = useQuotes();
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -47,19 +47,18 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({ searchQuery, onNavigate 
     };
 
     const handleDuplicate = (quote: Quote) => {
-        const newQuote: Quote = {
-            ...quote,
-            id: Date.now().toString(),
+        const { id: _id, ...rest } = quote;
+        createQuote({
+            ...rest,
             number: `QT-2026-${(quotes.length + 1).toString().padStart(4, '0')}`,
             status: 'Draft',
             createdDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        };
-        setQuotes([newQuote, ...quotes]);
+        });
         toast.success('Quote duplicated');
     };
 
     const handleDelete = (id: string) => {
-        setQuotes(quotes.filter(q => q.id !== id));
+        removeQuote(id);
         toast.success('Quote deleted');
     };
 
