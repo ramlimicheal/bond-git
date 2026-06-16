@@ -12,6 +12,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, onNavigate }) => {
   const [salesOpen, setSalesOpen] = useState(true);
+  const [legalOpen, setLegalOpen] = useState(true);
   const { theme, toggleTheme } = useTheme();
 
   const handleNav = (page: Page) => {
@@ -76,6 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
               <div className="pl-10 space-y-1 mt-1">
                 <button
                   type="button"
+                  onClick={() => handleNav(Page.SALES_OVERVIEW)}
                   className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   Sales Overview
@@ -114,6 +116,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
             )}
           </div>
 
+          {/* Legal section */}
+          <div className="pt-2">
+            <button
+              onClick={() => setLegalOpen(!legalOpen)}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Icons.Scale size={20} />
+                Legal
+              </div>
+              <Icons.ChevronDown size={16} className={`transform transition-transform ${legalOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {legalOpen && (
+              <div className="pl-10 space-y-1 mt-1">
+                <button
+                  type="button"
+                  onClick={() => handleNav(Page.LEGAL_CASES)}
+                  className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${currentPage === Page.LEGAL_CASES ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}
+                >
+                  Legal Cases
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNav(Page.LAWYERS)}
+                  className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${currentPage === Page.LAWYERS ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}
+                >
+                  Lawyers
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => handleNav(Page.ACCOUNTS)}
             className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentPage === Page.ACCOUNTS
@@ -147,10 +181,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
             Products
           </button>
 
-          <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <button
+            onClick={() => handleNav(Page.REPORTS)}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentPage === Page.REPORTS
+              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+              }`}
+          >
             <Icons.Reports size={20} />
             Finance Reports
-          </a>
+          </button>
 
           <button
             onClick={() => handleNav(Page.SETTINGS)}
