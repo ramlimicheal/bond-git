@@ -71,6 +71,33 @@ export interface User {
   avatarUrl?: string;
 }
 
+export interface Client {
+  id: string;
+  name: string;
+  company?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  gstin?: string;
+  pan?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  category: 'Design' | 'Development' | 'Consulting' | 'Support' | 'Other';
+  price: number;
+  taxRate: number;
+  unit: string;
+  createdAt: string;
+}
+
 export interface Stat {
   label: string;
   value: number;
@@ -87,6 +114,7 @@ export enum Tab {
 
 export enum Page {
   DASHBOARD = 'Dashboard',
+  INVOICES = 'INVOICES',
   ACCOUNTS = 'Accounts',
   INVOICE_DETAILS = 'INVOICE_DETAILS',
   CREATE_INVOICE = 'CREATE_INVOICE',
