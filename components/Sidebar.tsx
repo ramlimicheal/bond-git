@@ -205,19 +205,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="mb-2 flex justify-between items-end">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Invoices left</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">12 Invoices</p>
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-4 overflow-hidden">
-            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '45%' }}></div>
-          </div>
-          <button className="w-full py-2 px-4 border border-gray-200 dark:border-gray-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-3">
-            Upgrade to Pro
-          </button>
-
           <button
             onClick={toggleTheme}
             className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 dark:border-gray-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
