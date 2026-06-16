@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { InvoicesPage } from './components/InvoicesPage';
 import ProductsPage from './components/ProductsPage';
 import ClientsPage from './components/ClientsPage';
+import { AccountsPage } from './components/AccountsPage';
 import { CreateInvoicePage } from './components/CreateInvoicePage';
 import { InvoiceDetailsPage } from './components/InvoiceDetailsPage';
 import { SettingsPage } from './components/SettingsPage';
@@ -137,6 +138,7 @@ function AppContent() {
                     <Routes>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/dashboard" element={<InvoicesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
+                        <Route path="/accounts" element={<AccountsPage searchQuery={searchQuery} />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/clients" element={<ClientsPage />} />
                         <Route path="/invoices" element={<Navigate to="/dashboard" replace />} />
