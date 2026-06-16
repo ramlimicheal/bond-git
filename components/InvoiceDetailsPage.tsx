@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Invoice } from '../types';
 import { Icons } from './Icon';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
-import { downloadInvoicePDF } from './InvoicePrintView';
+import { useOrg } from '../org.context';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 
