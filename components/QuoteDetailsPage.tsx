@@ -22,6 +22,7 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
     onConvertToInvoice,
 }) => {
     const { confirm } = useConfirmDialog();
+    const { org } = useOrg();
     const quoteRef = useRef<HTMLDivElement>(null);
 
     const isAccepted = quote.status === 'Accepted';
