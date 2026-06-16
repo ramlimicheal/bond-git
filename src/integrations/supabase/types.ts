@@ -232,6 +232,8 @@ export type Database = {
         Row: {
           amount_paid: number
           client_id: string | null
+          client_name: string | null
+          client_type: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -239,6 +241,7 @@ export type Database = {
           due_date: string | null
           id: string
           issue_date: string
+          items: Json
           notes: string | null
           number: string
           org_id: string
@@ -256,6 +259,8 @@ export type Database = {
         Insert: {
           amount_paid?: number
           client_id?: string | null
+          client_name?: string | null
+          client_type?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -263,6 +268,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date?: string
+          items?: Json
           notes?: string | null
           number: string
           org_id: string
@@ -280,6 +286,8 @@ export type Database = {
         Update: {
           amount_paid?: number
           client_id?: string | null
+          client_name?: string | null
+          client_type?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -287,6 +295,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date?: string
+          items?: Json
           notes?: string | null
           number?: string
           org_id?: string
@@ -890,7 +899,9 @@ export type Database = {
       }
       proposals: {
         Row: {
+          client_email: string | null
           client_id: string | null
+          client_name: string | null
           client_signature: string | null
           client_signed_at: string | null
           created_at: string
@@ -911,7 +922,9 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          client_email?: string | null
           client_id?: string | null
+          client_name?: string | null
           client_signature?: string | null
           client_signed_at?: string | null
           created_at?: string
@@ -932,7 +945,9 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          client_email?: string | null
           client_id?: string | null
+          client_name?: string | null
           client_signature?: string | null
           client_signed_at?: string | null
           created_at?: string
@@ -1026,12 +1041,15 @@ export type Database = {
       quotes: {
         Row: {
           client_id: string | null
+          client_name: string | null
+          client_type: string | null
           created_at: string
           created_by: string | null
           currency: string
           discount_amount: number
           id: string
           issue_date: string
+          items: Json
           notes: string | null
           number: string
           org_id: string
@@ -1046,12 +1064,15 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          client_name?: string | null
+          client_type?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
           discount_amount?: number
           id?: string
           issue_date?: string
+          items?: Json
           notes?: string | null
           number: string
           org_id: string
@@ -1066,12 +1087,15 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          client_name?: string | null
+          client_type?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
           discount_amount?: number
           id?: string
           issue_date?: string
+          items?: Json
           notes?: string | null
           number?: string
           org_id?: string
