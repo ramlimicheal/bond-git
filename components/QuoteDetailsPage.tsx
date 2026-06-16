@@ -3,6 +3,8 @@ import { Quote } from '../types';
 import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
+import { generateQuotePDF, downloadBlob } from '../utils/pdfGenerator';
+import { useOrg } from '../org.context';
 
 interface QuoteDetailsPageProps {
     quote: Quote;
@@ -54,8 +56,12 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
         toast.success('Quote duplicated');
     };
 
-    const handleDownloadPDF = () => {
-        toast.success('Downloading quote PDF...');
+    const handleDownloadPDF = async () => {
+        try {
+            const blob = await generateQuotePDF(quote, org || {});
+            downloadBlob(blob, `Quote-${quote.number}.pdf`);
+            toast.success('Quote PDF downloaded');
+        } catch (e) { console.error(e); toast.error('Failed to generate PDF'); }
     };
 
     const handleMarkAsAccepted = () => {
