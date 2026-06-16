@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
           <button
             onClick={() => handleNav(Page.DASHBOARD)}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentPage === Page.DASHBOARD || currentPage === Page.INVOICE_DETAILS
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${currentPage === Page.DASHBOARD
               ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
               : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
               }`}
