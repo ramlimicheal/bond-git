@@ -1,6 +1,40 @@
 import { ApiInvoice, ApiUser, AuthResponse } from './api.types.ts';
 import { INVOICES_DATA, USERS_DATA } from './constants.ts';
 import type { Invoice, User } from './types.ts';
+import { supabase } from './src/integrations/supabase/client';
+
+const db = supabase as any;
+
+async function getCurrentOrgId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await db.from('organization_members')
+    .select('org_id').eq('user_id', user.id)
+    .order('joined_at', { ascending: true }).limit(1).maybeSingle();
+  return data?.org_id ?? null;
+}
+
+function rowToApiInvoice(r: any): ApiInvoice {
+  const total = Number(r.total);
+  const paid = Number(r.amount_paid);
+  return {
+    id: r.id,
+    number: r.number,
+    status: (r.status?.[0]?.toUpperCase() + r.status?.slice(1)) || 'Draft',
+    clientName: r.client_name ?? '',
+    clientType: r.client_type ?? '',
+    issuedAt: r.issue_date ?? '',
+    dueAt: r.due_date ?? '',
+    amountPaid: paid,
+    amountDue: total - paid,
+    items: (r.items ?? []).map((it: any, i: number) => ({
+      id: String(it.id ?? i),
+      description: it.description ?? '',
+      quantity: Number(it.quantity ?? 1),
+      price: Number(it.price ?? 0),
+    })),
+  };
+}
 
 const STORAGE_KEYS = {
   invoices: 'billenty_invoices',
@@ -33,7 +67,7 @@ function parseNumericId(id: string): number {
 
 function toApiInvoice(invoice: Invoice): ApiInvoice {
   return {
-    id: parseNumericId(invoice.id),
+    id: invoice.id,
     number: invoice.number,
     status: invoice.status,
     clientName: invoice.clientName,
@@ -43,7 +77,7 @@ function toApiInvoice(invoice: Invoice): ApiInvoice {
     amountPaid: invoice.amountPaid,
     amountDue: invoice.amountDue,
     items: invoice.items.map((item, index) => ({
-      id: parseNumericId(item.id) || index + 1,
+      id: String(item.id ?? index),
       description: item.description,
       quantity: item.quantity,
       price: item.price,
