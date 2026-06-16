@@ -20,6 +20,7 @@ import { Signup } from './components/Signup';
 import DashboardPage from './components/Dashboard';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { AuthProvider, useAuth } from './auth.context';
+import { OrgProvider } from './org.context';
 import { fetchInvoices, deleteInvoice } from './api.client';
 import { mapApiInvoiceToInvoice } from './mappers';
 import { useQuotes, useProposals } from './dataStore';
@@ -27,9 +28,10 @@ import { toast } from './components/Toast';
 
 // Protected Route Component
 function RequireAuth({ children }: { children: JSX.Element }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
     const location = useLocation();
 
+    if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading…</div>;
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
@@ -229,17 +231,19 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/*" element={
-                        <RequireAuth>
-                            <AppContent />
-                        </RequireAuth>
-                    } />
-                </Routes>
-            </Router>
+            <OrgProvider>
+                <Router>
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/*" element={
+                            <RequireAuth>
+                                <AppContent />
+                            </RequireAuth>
+                        } />
+                    </Routes>
+                </Router>
+            </OrgProvider>
         </AuthProvider>
     );
 }

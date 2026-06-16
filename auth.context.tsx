@@ -1,49 +1,77 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { AuthResponse } from './api.types.ts';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from './src/integrations/supabase/client';
+import { lovable } from './src/integrations/lovable';
 
 interface AuthContextValue {
-  user: AuthResponse['user'] | null;
+  user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  register: (name: string, email: string, password: string, companyName?: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthResponse['user'] | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const stored = localStorage.getItem('auth_user');
-    if (!stored) return null;
-    try { return JSON.parse(stored); }
-    catch { localStorage.removeItem('auth_user'); return null; }
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Listener first to capture transitions
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, s) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+    });
+    // Initial session
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string) => {
-    if (!email || !password) throw new Error('Email and password required');
-    const mockUser = { id: 1, email, name: email.split('@')[0] || 'User', role: 'admin' };
-    localStorage.setItem('auth_token', 'mock-token');
-    localStorage.setItem('auth_user', JSON.stringify(mockUser));
-    setUser(mockUser);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    if (!name || !email || !password) throw new Error('All fields required');
-    const mockUser = { id: 1, email, name, role: 'admin' };
-    localStorage.setItem('auth_token', 'mock-token');
-    localStorage.setItem('auth_user', JSON.stringify(mockUser));
-    setUser(mockUser);
+  const register = async (name: string, email: string, password: string, companyName?: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { full_name: name, company_name: companyName || `${name}'s Company` },
+      },
+    });
+    if (error) throw error;
+    // If session is immediately available (email confirmation off), bootstrap org
+    if (data.session && data.user) {
+      await supabase.from('organizations').insert({
+        name: companyName || `${name}'s Company`,
+        email,
+        created_by: data.user.id,
+      });
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user');
-    localStorage.removeItem('auth_token');
+  const loginWithGoogle = async () => {
+    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
+    if (result.error) throw result.error;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, session, isAuthenticated: !!user, loading, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -51,8 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
   return ctx;
 }
