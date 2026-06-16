@@ -1,12 +1,12 @@
 export interface ApiInvoiceItem {
-  id: number;
+  id: string;
   description: string;
   quantity: number;
   price: number;
 }
 
 export interface ApiInvoice {
-  id: number;
+  id: string;
   number: string;
   status: string;
   clientName: string;
