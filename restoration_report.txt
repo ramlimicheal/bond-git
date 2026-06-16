@@ -1,9 +1,0 @@
-BILLENTY RESTORATION REPORT
----------------------------
-Timestamp: Sat Feb  7 14:05:23 IST 2026
-Status: PARTIAL SUCCESS
-Details:
-- Critical corruption (Python stubs) eliminated.
-- TypeScript compilation errors remain (normal dev work).
-- Phoenix Executor hardened against recurrence.
-

@@ -2,73 +2,16 @@ import React, { useState, useMemo } from 'react';
 import { Icons } from './Icon';
 import { toast } from './Toast';
 import { Proposal, Page } from '../types';
+import { useProposals } from '../dataStore';
 
 interface ProposalsPageProps {
     searchQuery: string;
     onNavigate: (page: Page, id?: string) => void;
 }
 
-const MOCK_PROPOSALS: Proposal[] = [
-    {
-        id: '1',
-        number: 'PROP-2026-0001',
-        title: 'Logo Design & Brand Identity',
-        status: 'Signed',
-        clientName: 'Rahul Sharma',
-        clientEmail: 'rahul@techsolutions.in',
-        projectType: 'Branding',
-        createdDate: '05 Jan 2026',
-        validUntil: '05 Feb 2026',
-        totalValue: 45000,
-        sections: [],
-        clientSignature: 'Rahul Sharma',
-        clientSignedAt: '07 Jan 2026',
-        senderSignature: 'Billenty User',
-        senderSignedAt: '05 Jan 2026'
-    },
-    {
-        id: '2',
-        number: 'PROP-2026-0002',
-        title: 'E-Commerce Website Development',
-        status: 'Sent',
-        clientName: 'Priya Patel',
-        clientEmail: 'priya@creativestudio.com',
-        projectType: 'Web Development',
-        createdDate: '08 Jan 2026',
-        validUntil: '08 Feb 2026',
-        totalValue: 150000,
-        sections: [],
-    },
-    {
-        id: '3',
-        number: 'PROP-2026-0003',
-        title: 'Mobile App UI/UX Design',
-        status: 'Draft',
-        clientName: 'Amit Kumar',
-        clientEmail: 'amit@startupHub.io',
-        projectType: 'UI/UX Design',
-        createdDate: '10 Jan 2026',
-        validUntil: '10 Feb 2026',
-        totalValue: 75000,
-        sections: [],
-    },
-    {
-        id: '4',
-        number: 'PROP-2026-0004',
-        title: 'Annual Maintenance Contract',
-        status: 'Viewed',
-        clientName: 'Tech Corp',
-        clientEmail: 'contracts@techcorp.com',
-        projectType: 'Support',
-        createdDate: '03 Jan 2026',
-        validUntil: '03 Feb 2026',
-        totalValue: 120000,
-        sections: [],
-    },
-];
 
 export const ProposalsPage: React.FC<ProposalsPageProps> = ({ searchQuery, onNavigate }) => {
-    const [proposals] = useState<Proposal[]>(MOCK_PROPOSALS);
+    const { items: proposals } = useProposals();
     const [filterStatus, setFilterStatus] = useState<string>('all');
 
     const filteredProposals = useMemo(() => {

@@ -2,73 +2,15 @@ import React, { useState, useMemo } from 'react';
 import { Icons } from './Icon';
 import { toast } from './Toast';
 import { Quote, Page } from '../types';
+import { useQuotes } from '../dataStore';
 
 interface QuotesPageProps {
     searchQuery: string;
     onNavigate: (page: Page, id?: string) => void;
 }
 
-// Mock data for quotes
-const MOCK_QUOTES: Quote[] = [
-    {
-        id: '1',
-        number: 'QT-2026-0001',
-        status: 'Sent',
-        clientName: 'Tech Solutions Inc.',
-        clientType: 'Software Development',
-        createdDate: '10 Jan 2026',
-        validUntil: '10 Feb 2026',
-        total: 15000,
-        items: [{ id: '1', description: 'Web Application Development', quantity: 1, price: 15000 }]
-    },
-    {
-        id: '2',
-        number: 'QT-2026-0002',
-        status: 'Draft',
-        clientName: 'Creative Agency',
-        clientType: 'Branding',
-        createdDate: '08 Jan 2026',
-        validUntil: '08 Feb 2026',
-        total: 5500,
-        items: [{ id: '1', description: 'Brand Identity Package', quantity: 1, price: 5500 }]
-    },
-    {
-        id: '3',
-        number: 'QT-2026-0003',
-        status: 'Accepted',
-        clientName: 'Global Enterprises',
-        clientType: 'Consulting',
-        createdDate: '05 Jan 2026',
-        validUntil: '05 Feb 2026',
-        total: 25000,
-        items: [{ id: '1', description: 'Strategic Consulting Package', quantity: 1, price: 25000 }]
-    },
-    {
-        id: '4',
-        number: 'QT-2026-0004',
-        status: 'Declined',
-        clientName: 'StartUp Hub',
-        clientType: 'MVP Development',
-        createdDate: '03 Jan 2026',
-        validUntil: '03 Feb 2026',
-        total: 8000,
-        items: [{ id: '1', description: 'MVP Application', quantity: 1, price: 8000 }]
-    },
-    {
-        id: '5',
-        number: 'QT-2026-0005',
-        status: 'Expired',
-        clientName: 'Old Client Corp',
-        clientType: 'Maintenance',
-        createdDate: '01 Dec 2025',
-        validUntil: '01 Jan 2026',
-        total: 3000,
-        items: [{ id: '1', description: 'Annual Maintenance', quantity: 1, price: 3000 }]
-    },
-];
-
 export const QuotesPage: React.FC<QuotesPageProps> = ({ searchQuery, onNavigate }) => {
-    const [quotes, setQuotes] = useState<Quote[]>(MOCK_QUOTES);
+    const { items: quotes, create: createQuote, remove: removeQuote } = useQuotes();
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -105,19 +47,18 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({ searchQuery, onNavigate 
     };
 
     const handleDuplicate = (quote: Quote) => {
-        const newQuote: Quote = {
-            ...quote,
-            id: Date.now().toString(),
+        const { id: _id, ...rest } = quote;
+        createQuote({
+            ...rest,
             number: `QT-2026-${(quotes.length + 1).toString().padStart(4, '0')}`,
             status: 'Draft',
             createdDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        };
-        setQuotes([newQuote, ...quotes]);
+        });
         toast.success('Quote duplicated');
     };
 
     const handleDelete = (id: string) => {
-        setQuotes(quotes.filter(q => q.id !== id));
+        removeQuote(id);
         toast.success('Quote deleted');
     };
 

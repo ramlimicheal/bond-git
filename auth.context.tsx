@@ -12,18 +12,13 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthResponse['user'] | null>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('auth_user');
-      }
-    }
-  }, []);
+  const [user, setUser] = useState<AuthResponse['user'] | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem('auth_user');
+    if (!stored) return null;
+    try { return JSON.parse(stored); }
+    catch { localStorage.removeItem('auth_user'); return null; }
+  });
 
   const login = async (email: string, password: string) => {
     if (!email || !password) throw new Error('Email and password required');

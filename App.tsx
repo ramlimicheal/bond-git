@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { InvoicesPage } from './components/InvoicesPage';
 import ProductsPage from './components/ProductsPage';
@@ -17,8 +17,13 @@ import { ProposalDetailsPage } from './components/ProposalDetailsPage';
 import { PaymentGateway } from './components/PaymentGateway';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
-import { Page } from './types';
+import DashboardPage from './components/Dashboard';
+import { Page, Invoice, Quote, Proposal } from './types';
 import { AuthProvider, useAuth } from './auth.context';
+import { fetchInvoices, deleteInvoice } from './api.client';
+import { mapApiInvoiceToInvoice } from './mappers';
+import { useQuotes, useProposals } from './dataStore';
+import { toast } from './components/Toast';
 
 // Protected Route Component
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -32,17 +37,97 @@ function RequireAuth({ children }: { children: JSX.Element }) {
     return children;
 }
 
+// ====== ROUTE WRAPPERS — look up entity by :id ======
+function InvoiceDetailsRoute() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [invoice, setInvoice] = useState<Invoice | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchInvoices()
+            .then(list => {
+                const found = list.find(i => String(i.id) === id);
+                setInvoice(found ? mapApiInvoiceToInvoice(found) : null);
+            })
+            .finally(() => setLoading(false));
+    }, [id]);
+
+    if (loading) return <div className="p-8 text-gray-500">Loading…</div>;
+    if (!invoice) return (
+        <div className="p-8 text-center">
+            <h2 className="text-xl font-bold mb-2">Invoice not found</h2>
+            <button onClick={() => navigate('/invoices')} className="text-sm text-gray-500 underline">Back to invoices</button>
+        </div>
+    );
+    return (
+        <InvoiceDetailsPage
+            invoice={invoice}
+            onBack={() => navigate('/invoices')}
+            onEdit={() => navigate('/invoices')}
+            onDelete={async (id) => { await deleteInvoice(Number(id)); toast.success('Invoice deleted'); navigate('/invoices'); }}
+        />
+    );
+}
+
+function QuoteDetailsRoute() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { items, remove } = useQuotes();
+    const quote = items.find(q => q.id === id);
+
+    if (!quote) return (
+        <div className="p-8 text-center">
+            <h2 className="text-xl font-bold mb-2">Quote not found</h2>
+            <button onClick={() => navigate('/quotes')} className="text-sm text-gray-500 underline">Back to quotes</button>
+        </div>
+    );
+    return (
+        <QuoteDetailsPage
+            quote={quote}
+            onBack={() => navigate('/quotes')}
+            onEdit={() => navigate('/quotes')}
+            onDelete={(qid) => { remove(qid); toast.success('Quote deleted'); navigate('/quotes'); }}
+            onConvertToInvoice={() => { toast.success('Converting to invoice...'); navigate('/invoices/new'); }}
+        />
+    );
+}
+
+function ProposalDetailsRoute() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { items, remove } = useProposals();
+    const proposal = items.find(p => p.id === id);
+
+    if (!proposal) return (
+        <div className="p-8 text-center">
+            <h2 className="text-xl font-bold mb-2">Proposal not found</h2>
+            <button onClick={() => navigate('/proposals')} className="text-sm text-gray-500 underline">Back to proposals</button>
+        </div>
+    );
+    return (
+        <ProposalDetailsPage
+            proposal={proposal}
+            onBack={() => navigate('/proposals')}
+            onEdit={() => navigate('/proposals')}
+            onDelete={(pid) => { remove(pid); toast.success('Proposal deleted'); navigate('/proposals'); }}
+        />
+    );
+}
+
 function AppContent() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+    const { create: createQuote } = useQuotes();
+    const { create: createProposal } = useProposals();
 
     // Derive current page from path for Sidebar highlighting
     const getCurrentPage = (): Page => {
         const path = location.pathname;
         if (path === '/dashboard' || path === '/') return Page.DASHBOARD;
-        if (path === '/invoices') return Page.DASHBOARD; // Redirects/Aliases
+        if (path === '/invoices') return Page.INVOICES;
         if (path.startsWith('/invoices/new')) return Page.CREATE_INVOICE;
         if (path.startsWith('/invoices/')) return Page.INVOICE_DETAILS;
         if (path === '/quotes') return Page.QUOTES;
@@ -61,6 +146,7 @@ function AppContent() {
     const handleNavigate = (page: Page, id?: string) => {
         switch (page) {
             case Page.DASHBOARD: navigate('/dashboard'); break;
+            case Page.INVOICES: navigate('/invoices'); break;
             case Page.INVOICE_DETAILS: navigate(id ? `/invoices/${id}` : '/invoices'); break;
             case Page.CREATE_INVOICE: navigate('/invoices/new'); break;
             case Page.QUOTES: navigate('/quotes'); break;
@@ -75,31 +161,6 @@ function AppContent() {
             case Page.ACCOUNTS: navigate('/accounts'); break;
             default: navigate('/dashboard');
         }
-    };
-
-    // Mock Data for Development/Fixing Routes
-    const mockQuote: any = {
-        id: '1',
-        number: 'QT-001',
-        status: 'Draft',
-        clientName: 'Test Client',
-        clientType: 'Test Type',
-        createdDate: new Date().toISOString(),
-        validUntil: new Date().toISOString(),
-        total: 1000,
-        items: []
-    };
-
-    const mockProposal: any = {
-        id: '1',
-        number: 'PR-001',
-        title: 'Test Proposal',
-        status: 'Draft',
-        clientName: 'Test Client',
-        validUntil: new Date().toISOString(),
-        total: 5000,
-        content: 'Test Content',
-        sections: []
     };
 
     return (
@@ -137,19 +198,19 @@ function AppContent() {
                 <main className="flex-1 overflow-y-auto p-8">
                     <Routes>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<InvoicesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
+                        <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/accounts" element={<AccountsPage searchQuery={searchQuery} />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/clients" element={<ClientsPage />} />
-                        <Route path="/invoices" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/invoices" element={<InvoicesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
                         <Route path="/invoices/new" element={<CreateInvoicePage onBack={() => handleNavigate(Page.DASHBOARD)} onSubmit={(data) => console.log('Invoice data:', data)} />} />
-                        <Route path="/invoices/:id" element={<InvoiceDetailsPage onBack={() => handleNavigate(Page.DASHBOARD)} onEdit={() => { }} onDelete={() => { }} invoice={{} as any} />} />
+                        <Route path="/invoices/:id" element={<InvoiceDetailsRoute />} />
                         <Route path="/quotes" element={<QuotesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
-                        <Route path="/quotes/new" element={<CreateQuotePage onBack={() => handleNavigate(Page.QUOTES)} onSubmit={() => handleNavigate(Page.QUOTES)} />} />
-                        <Route path="/quotes/:id" element={<QuoteDetailsPage quote={mockQuote} onBack={() => handleNavigate(Page.QUOTES)} onEdit={() => { }} onDelete={() => { }} onConvertToInvoice={() => { }} />} />
+                        <Route path="/quotes/new" element={<CreateQuotePage onBack={() => handleNavigate(Page.QUOTES)} onSubmit={(data: any) => { createQuote({ ...data, createdDate: new Date().toLocaleDateString('en-GB'), number: data?.number || `QT-${Date.now()}`, status: 'Draft' }); toast.success('Quote created'); handleNavigate(Page.QUOTES); }} />} />
+                        <Route path="/quotes/:id" element={<QuoteDetailsRoute />} />
                         <Route path="/proposals" element={<ProposalsPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
-                        <Route path="/proposals/new" element={<CreateProposalPage onBack={() => handleNavigate(Page.PROPOSALS)} onSubmit={() => handleNavigate(Page.PROPOSALS)} />} />
-                        <Route path="/proposals/:id" element={<ProposalDetailsPage proposal={mockProposal} onBack={() => handleNavigate(Page.PROPOSALS)} onEdit={() => { }} onDelete={() => { }} />} />
+                        <Route path="/proposals/new" element={<CreateProposalPage onBack={() => handleNavigate(Page.PROPOSALS)} onSubmit={(data: any) => { createProposal({ ...data, createdDate: new Date().toLocaleDateString('en-GB'), number: data?.number || `PROP-${Date.now()}`, status: 'Draft' }); toast.success('Proposal created'); handleNavigate(Page.PROPOSALS); }} />} />
+                        <Route path="/proposals/:id" element={<ProposalDetailsRoute />} />
                         <Route path="/settings" element={<SettingsPage onBack={() => handleNavigate(Page.DASHBOARD)} />} />
                         <Route path="/payment-test" element={
                             <div className="p-8">
@@ -157,6 +218,7 @@ function AppContent() {
                                 <PaymentGateway amount={99.99} onSuccess={(id) => alert(`Paid: ${id}`)} />
                             </div>
                         } />
+                        <Route path="*" element={<div className="p-8 text-center"><h2 className="text-xl font-bold mb-2">Page not found</h2><button onClick={() => navigate('/dashboard')} className="text-sm text-gray-500 underline">Go to Dashboard</button></div>} />
                     </Routes>
                 </main>
             </div>
