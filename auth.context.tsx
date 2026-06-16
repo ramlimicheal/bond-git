@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { AuthResponse } from './api.types.ts';
-import { login as apiLogin, register as apiRegister } from './api.client.ts';
 
 interface AuthContextValue {
   user: AuthResponse['user'] | null;
@@ -27,15 +26,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await apiLogin(email, password);
-    setUser(res.user);
-    localStorage.setItem('auth_user', JSON.stringify(res.user));
+    if (!email || !password) throw new Error('Email and password required');
+    const mockUser = { id: 1, email, name: email.split('@')[0] || 'User', role: 'admin' };
+    localStorage.setItem('auth_token', 'mock-token');
+    localStorage.setItem('auth_user', JSON.stringify(mockUser));
+    setUser(mockUser);
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const res = await apiRegister(name, email, password);
-    setUser(res.user);
-    localStorage.setItem('auth_user', JSON.stringify(res.user));
+    if (!name || !email || !password) throw new Error('All fields required');
+    const mockUser = { id: 1, email, name, role: 'admin' };
+    localStorage.setItem('auth_token', 'mock-token');
+    localStorage.setItem('auth_user', JSON.stringify(mockUser));
+    setUser(mockUser);
   };
 
   const logout = () => {
