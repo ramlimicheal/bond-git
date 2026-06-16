@@ -1,173 +1,375 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { Invoice, Proposal } from '../types';
+import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
+import QRCode from 'qrcode';
+import type { Invoice, Proposal, Quote } from '../types';
 
-/**
- * Generates a PDF invoice based on provided data.
- */
-export const generateInvoicePDF = async (invoiceData: Invoice): Promise<Blob> => {
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-    });
-
-    const margin = 20;
-    let y = margin;
-
-    // Header
-    doc.setFontSize(24);
-    doc.text('INVOICE', margin, y);
-    doc.setFontSize(10);
-    doc.text(`# ${invoiceData.number}`, 150, y);
-
-    y += 15;
-    doc.setFontSize(12);
-    doc.text('Bill To:', margin, y);
-    doc.setFontSize(10);
-    doc.text(invoiceData.clientName || 'N/A', margin, y + 5);
-    doc.text(invoiceData.clientType || 'N/A', margin, y + 10);
-
-    y += 30;
-    // Table Header
-    doc.line(margin, y, 190, y);
-    y += 5;
-    doc.text('Description', margin, y);
-    doc.text('Qty', 110, y);
-    doc.text('Price', 130, y);
-    doc.text('Total', 160, y);
-    y += 5;
-    doc.line(margin, y, 190, y);
-
-    // Items
-    y += 10;
-    invoiceData.items.forEach((item) => {
-        doc.text(item.description, margin, y);
-        doc.text(item.quantity.toString(), 110, y);
-        doc.text(`₹${item.price.toLocaleString()}`, 130, y);
-        doc.text(`₹${(item.quantity * item.price).toLocaleString()}`, 160, y);
-        y += 8;
-    });
-
-    y += 10;
-    doc.line(margin, y, 190, y);
-    y += 10;
-    const total = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total Amount Due:', 110, y);
-    doc.text(`₹${total.toLocaleString()}`, 160, y);
-
-    return doc.output('blob');
+// ===== Design tokens =====
+const COLORS = {
+  text: rgb(0.1, 0.1, 0.12),
+  muted: rgb(0.45, 0.45, 0.5),
+  line: rgb(0.85, 0.85, 0.88),
+  accent: rgb(0.06, 0.4, 0.85),
+  brandBg: rgb(0.97, 0.97, 0.99),
+  danger: rgb(0.8, 0.13, 0.13),
 };
 
-/**
- * Generates a PDF proposal based on provided data.
- * Handles complex signatures (drawn images or typed text).
- */
-export const generateProposalPDF = async (proposal: Proposal): Promise<Blob> => {
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-    });
+const MARGIN = 48;
+const PAGE_W = 595.28; // A4
+const PAGE_H = 841.89;
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    let y = margin;
+interface OrgBranding {
+  name?: string;
+  legal_name?: string | null;
+  gstin?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  upi_vpa?: string | null;
+}
 
-    // Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
-    doc.text('PROPOSAL', margin, y);
+async function loadFonts(pdf: PDFDocument) {
+  const regular = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const italic = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  return { regular, bold, italic };
+}
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Proposal #: ${proposal.number}`, pageWidth - margin - 40, y);
-    y += 10;
-    doc.text(`Date: ${proposal.createdDate}`, pageWidth - margin - 40, y);
-    y += 5;
-    doc.text(`Valid Until: ${proposal.validUntil}`, pageWidth - margin - 40, y);
+function drawText(page: PDFPage, text: string, x: number, y: number, opts: { font: PDFFont; size?: number; color?: ReturnType<typeof rgb>; maxWidth?: number } = {} as any) {
+  const size = opts.size ?? 10;
+  const color = opts.color ?? COLORS.text;
+  page.drawText(text ?? '', { x, y, size, font: opts.font, color });
+}
 
-    y += 15;
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(proposal.title, margin, y);
+function drawLine(page: PDFPage, x1: number, y1: number, x2: number, y2: number, color = COLORS.line) {
+  page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color, thickness: 0.7 });
+}
 
-    y += 15;
-    doc.setFontSize(12);
-    doc.text('Prepared For:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(proposal.clientName || 'N/A', margin, y + 5);
-    doc.text(proposal.clientEmail || 'N/A', margin, y + 10);
+function rupees(n: number) {
+  return `INR ${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-    y += 30;
-    // Sections
-    proposal.sections.forEach((section, index) => {
-        if (y > 250) {
-            doc.addPage();
-            y = margin;
-        }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text(`${index + 1}. ${section.title}`, margin, y);
-        y += 8;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const splitText = doc.splitTextToSize(section.content, pageWidth - 2 * margin);
-        doc.text(splitText, margin, y);
-        y += splitText.length * 5 + 10;
-    });
+function fmtDate(s: string | null | undefined) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
-    // Signatures
-    if (y > 220) {
-        doc.addPage();
-        y = margin;
+async function drawHeader(page: PDFPage, fonts: any, org: OrgBranding, title: string, number: string) {
+  // Brand band
+  page.drawRectangle({ x: 0, y: PAGE_H - 90, width: PAGE_W, height: 90, color: COLORS.brandBg });
+  // Logo square
+  page.drawRectangle({ x: MARGIN, y: PAGE_H - 70, width: 40, height: 40, color: COLORS.text });
+  drawText(page, 'B', MARGIN + 13, PAGE_H - 58, { font: fonts.bold, size: 22, color: rgb(1, 1, 1) });
+
+  drawText(page, (org.name || 'Your Company').toUpperCase(), MARGIN + 56, PAGE_H - 42, { font: fonts.bold, size: 13 });
+  if (org.gstin) drawText(page, `GSTIN ${org.gstin}`, MARGIN + 56, PAGE_H - 58, { font: fonts.regular, size: 9, color: COLORS.muted });
+  if (org.email) drawText(page, org.email, MARGIN + 56, PAGE_H - 72, { font: fonts.regular, size: 9, color: COLORS.muted });
+
+  // Title block (right)
+  drawText(page, title.toUpperCase(), PAGE_W - MARGIN - 130, PAGE_H - 42, { font: fonts.bold, size: 22, color: COLORS.accent });
+  drawText(page, `# ${number}`, PAGE_W - MARGIN - 130, PAGE_H - 60, { font: fonts.regular, size: 10, color: COLORS.muted });
+}
+
+function drawFooter(page: PDFPage, fonts: any) {
+  drawLine(page, MARGIN, 50, PAGE_W - MARGIN, 50);
+  drawText(page, 'Generated by BILLENTY  ·  Get paid. Guaranteed.', MARGIN, 32, { font: fonts.italic, size: 8, color: COLORS.muted });
+  drawText(page, 'billenty.app', PAGE_W - MARGIN - 60, 32, { font: fonts.regular, size: 8, color: COLORS.muted });
+}
+
+async function embedQR(pdf: PDFDocument, text: string) {
+  const dataUrl = await QRCode.toDataURL(text, { margin: 0, width: 200 });
+  const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]), (c) => c.charCodeAt(0));
+  return pdf.embedPng(bytes);
+}
+
+// ============ INVOICE / QUOTE TEMPLATE ============
+async function buildInvoiceLikePDF(
+  doc: { kind: 'INVOICE' | 'QUOTE'; number: string; status: string; dateLabel: string; dateValue: string; dueLabel: string; dueValue: string; clientName: string; clientType: string; items: { description: string; quantity: number; price: number }[]; subtotal: number; tax: number; total: number; amountPaid?: number; },
+  org: OrgBranding,
+): Promise<Blob> {
+  const pdf = await PDFDocument.create();
+  const fonts = await loadFonts(pdf);
+  const page = pdf.addPage([PAGE_W, PAGE_H]);
+
+  await drawHeader(page, fonts, org, doc.kind, doc.number);
+
+  // Status pill
+  const pillX = PAGE_W - MARGIN - 130;
+  page.drawRectangle({ x: pillX, y: PAGE_H - 80, width: 70, height: 16, color: doc.status.toLowerCase() === 'paid' ? rgb(0.15, 0.6, 0.2) : COLORS.text });
+  drawText(page, doc.status.toUpperCase(), pillX + 8, PAGE_H - 76, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+
+  let y = PAGE_H - 130;
+
+  // Bill To
+  drawText(page, 'BILL TO', MARGIN, y, { font: fonts.bold, size: 9, color: COLORS.muted });
+  drawText(page, doc.clientName || '—', MARGIN, y - 16, { font: fonts.bold, size: 12 });
+  drawText(page, doc.clientType || '', MARGIN, y - 30, { font: fonts.regular, size: 10, color: COLORS.muted });
+
+  // Dates (right)
+  const dx = PAGE_W - MARGIN - 180;
+  drawText(page, doc.dateLabel.toUpperCase(), dx, y, { font: fonts.bold, size: 9, color: COLORS.muted });
+  drawText(page, fmtDate(doc.dateValue), dx, y - 14, { font: fonts.regular, size: 10 });
+  drawText(page, doc.dueLabel.toUpperCase(), dx + 90, y, { font: fonts.bold, size: 9, color: COLORS.muted });
+  drawText(page, fmtDate(doc.dueValue), dx + 90, y - 14, { font: fonts.regular, size: 10 });
+
+  y -= 70;
+
+  // Items table header
+  page.drawRectangle({ x: MARGIN, y: y - 4, width: PAGE_W - 2 * MARGIN, height: 22, color: COLORS.text });
+  drawText(page, 'DESCRIPTION', MARGIN + 10, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  drawText(page, 'QTY', PAGE_W - MARGIN - 200, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  drawText(page, 'RATE', PAGE_W - MARGIN - 150, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  drawText(page, 'AMOUNT', PAGE_W - MARGIN - 70, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  y -= 30;
+
+  for (const it of doc.items) {
+    drawText(page, it.description || '—', MARGIN + 10, y, { font: fonts.regular, size: 10 });
+    drawText(page, String(it.quantity), PAGE_W - MARGIN - 200, y, { font: fonts.regular, size: 10 });
+    drawText(page, rupees(it.price), PAGE_W - MARGIN - 150, y, { font: fonts.regular, size: 10 });
+    drawText(page, rupees(it.quantity * it.price), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
+    y -= 20;
+    drawLine(page, MARGIN, y + 8, PAGE_W - MARGIN, y + 8);
+  }
+
+  y -= 10;
+
+  // Totals
+  const tx = PAGE_W - MARGIN - 200;
+  drawText(page, 'Subtotal', tx, y, { font: fonts.regular, size: 10, color: COLORS.muted });
+  drawText(page, rupees(doc.subtotal), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
+  y -= 16;
+  drawText(page, 'Tax (GST 18%)', tx, y, { font: fonts.regular, size: 10, color: COLORS.muted });
+  drawText(page, rupees(doc.tax), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
+  y -= 18;
+  drawLine(page, tx, y + 6, PAGE_W - MARGIN, y + 6, COLORS.text);
+  drawText(page, 'TOTAL', tx, y - 8, { font: fonts.bold, size: 12 });
+  drawText(page, rupees(doc.total), PAGE_W - MARGIN - 80, y - 8, { font: fonts.bold, size: 12, color: COLORS.accent });
+
+  if (doc.amountPaid !== undefined && doc.amountPaid > 0) {
+    y -= 28;
+    drawText(page, 'Paid', tx, y, { font: fonts.regular, size: 10, color: rgb(0.15, 0.6, 0.2) });
+    drawText(page, rupees(doc.amountPaid), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10, color: rgb(0.15, 0.6, 0.2) });
+    y -= 14;
+    drawText(page, 'Balance Due', tx, y, { font: fonts.bold, size: 10 });
+    drawText(page, rupees(doc.total - doc.amountPaid), PAGE_W - MARGIN - 70, y, { font: fonts.bold, size: 10, color: COLORS.danger });
+  }
+
+  // Payment section with UPI QR
+  if (doc.kind === 'INVOICE' && org.upi_vpa) {
+    const py = 140;
+    drawLine(page, MARGIN, py + 70, PAGE_W - MARGIN, py + 70);
+    drawText(page, 'PAY VIA UPI', MARGIN, py + 50, { font: fonts.bold, size: 10 });
+    drawText(page, org.upi_vpa, MARGIN, py + 34, { font: fonts.regular, size: 10, color: COLORS.muted });
+    drawText(page, 'Scan to pay any UPI app (GPay, PhonePe, Paytm)', MARGIN, py + 18, { font: fonts.italic, size: 8, color: COLORS.muted });
+
+    try {
+      const upiUri = `upi://pay?pa=${encodeURIComponent(org.upi_vpa)}&pn=${encodeURIComponent(org.name || '')}&am=${doc.total - (doc.amountPaid || 0)}&tn=${encodeURIComponent(doc.number)}&cu=INR`;
+      const qrImg = await embedQR(pdf, upiUri);
+      page.drawImage(qrImg, { x: PAGE_W - MARGIN - 80, y: py, width: 80, height: 80 });
+    } catch { /* ignore qr failures */ }
+  }
+
+  drawFooter(page, fonts);
+  const bytes = await pdf.save();
+  return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+}
+
+export async function generateInvoicePDF(invoice: Invoice, org: OrgBranding = {}): Promise<Blob> {
+  const subtotal = invoice.items.reduce((s, it) => s + it.quantity * it.price, 0);
+  const tax = subtotal * 0.18;
+  const total = invoice.amountPaid + invoice.amountDue;
+  return buildInvoiceLikePDF({
+    kind: 'INVOICE',
+    number: invoice.number,
+    status: invoice.status,
+    dateLabel: 'Issued',
+    dateValue: invoice.issuedDate,
+    dueLabel: 'Due',
+    dueValue: invoice.dueDate,
+    clientName: invoice.clientName,
+    clientType: invoice.clientType,
+    items: invoice.items,
+    subtotal,
+    tax,
+    total: total || subtotal + tax,
+    amountPaid: invoice.amountPaid,
+  }, org);
+}
+
+export async function generateQuotePDF(quote: Quote, org: OrgBranding = {}): Promise<Blob> {
+  const subtotal = quote.items.reduce((s, it) => s + it.quantity * it.price, 0);
+  return buildInvoiceLikePDF({
+    kind: 'QUOTE',
+    number: quote.number,
+    status: quote.status,
+    dateLabel: 'Created',
+    dateValue: quote.createdDate,
+    dueLabel: 'Valid Until',
+    dueValue: quote.validUntil,
+    clientName: quote.clientName,
+    clientType: quote.clientType,
+    items: quote.items,
+    subtotal,
+    tax: subtotal * 0.18,
+    total: quote.total || subtotal * 1.18,
+  }, org);
+}
+
+// ============ PROPOSAL TEMPLATE ============
+export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): Promise<Blob> {
+  const pdf = await PDFDocument.create();
+  const fonts = await loadFonts(pdf);
+  let page = pdf.addPage([PAGE_W, PAGE_H]);
+  await drawHeader(page, fonts, org, 'PROPOSAL', p.number);
+
+  let y = PAGE_H - 130;
+  drawText(page, p.title || 'Untitled Proposal', MARGIN, y, { font: fonts.bold, size: 18 });
+  y -= 28;
+  drawText(page, 'PREPARED FOR', MARGIN, y, { font: fonts.bold, size: 9, color: COLORS.muted });
+  drawText(page, p.clientName || '—', MARGIN, y - 14, { font: fonts.bold, size: 12 });
+  drawText(page, p.clientEmail || '', MARGIN, y - 28, { font: fonts.regular, size: 10, color: COLORS.muted });
+
+  drawText(page, 'PROJECT VALUE', PAGE_W - MARGIN - 150, y, { font: fonts.bold, size: 9, color: COLORS.muted });
+  drawText(page, rupees(p.totalValue), PAGE_W - MARGIN - 150, y - 16, { font: fonts.bold, size: 16, color: COLORS.accent });
+
+  y -= 70;
+
+  for (const s of p.sections || []) {
+    if (y < 120) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, org, 'PROPOSAL', p.number); y = PAGE_H - 130; }
+    drawText(page, s.title || '', MARGIN, y, { font: fonts.bold, size: 13 });
+    y -= 18;
+    const lines = wrapText(s.content || '', fonts.regular, 10, PAGE_W - 2 * MARGIN);
+    for (const ln of lines) {
+      if (y < 80) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, org, 'PROPOSAL', p.number); y = PAGE_H - 130; }
+      drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
+      y -= 14;
     }
+    y -= 12;
+  }
 
-    y += 10;
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Signatures', margin, y);
+  if (p.clientSignature || p.senderSignature) {
+    y = Math.max(y, 140);
+    drawLine(page, MARGIN, y, PAGE_W - MARGIN, y);
+    drawText(page, 'CLIENT SIGNATURE', MARGIN, y - 16, { font: fonts.bold, size: 9, color: COLORS.muted });
+    drawText(page, p.clientSignature || '—', MARGIN, y - 32, { font: fonts.italic, size: 12 });
+    drawText(page, 'SENDER SIGNATURE', PAGE_W / 2, y - 16, { font: fonts.bold, size: 9, color: COLORS.muted });
+    drawText(page, p.senderSignature || '—', PAGE_W / 2, y - 32, { font: fonts.italic, size: 12 });
+  }
 
-    y += 15;
-    // Helper to render signature
-    const renderSignature = (label: string, signature: string | undefined, x: number, currentY: number) => {
-        doc.setFont('helvetica', 'bold');
-        doc.text(label, x, currentY);
+  drawFooter(page, fonts);
+  const bytes = await pdf.save();
+  return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+}
 
-        const sigY = currentY + 5;
-        if (signature?.startsWith('data:image/')) {
-            try {
-                doc.addImage(signature, 'PNG', x, sigY, 50, 20);
-            } catch (e) {
-                console.error('Failed to add signature image:', e);
-                doc.setFont('courier', 'italic');
-                doc.text(signature.slice(0, 20) + '...', x, sigY + 10);
-            }
-        } else if (signature) {
-            doc.setFont('courier', 'italic');
-            doc.setFontSize(16);
-            doc.text(signature, x, sigY + 12);
-            doc.setFontSize(10);
-        } else {
-            doc.setFont('helvetica', 'italic');
-            doc.text('Pending Action', x, sigY + 10);
-        }
-    };
+// ============ LEGAL NOTICE TEMPLATE ============
+export interface LegalNoticeData {
+  noticeType: 'demand' | 'section_138' | 'section_8_ibc' | 'msme_samadhaan';
+  caseNumber: string;
+  org: OrgBranding;
+  client: { name: string; address?: string; email?: string };
+  invoiceNumber: string;
+  invoiceDate: string;
+  amountClaimed: number;
+  interestRate: number;
+  replyDays?: number;
+}
 
-    renderSignature('Service Provider', proposal.senderSignature, margin, y);
-    renderSignature('Client', proposal.clientSignature, pageWidth / 2 + 10, y);
-
-    y += 35;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text(`Signed At: ${proposal.senderSignedAt || 'Not signed'}`, margin, y);
-    doc.text(`Signed At: ${proposal.clientSignedAt || 'Not signed'}`, pageWidth / 2 + 10, y);
-
-    y += 15;
-    doc.text('This document is legally binding under the Indian Contract Act, 1872.', margin, y);
-
-    return doc.output('blob');
+const NOTICE_TITLES: Record<LegalNoticeData['noticeType'], string> = {
+  demand: 'LEGAL DEMAND NOTICE',
+  section_138: 'NOTICE UNDER SECTION 138 OF THE NEGOTIABLE INSTRUMENTS ACT, 1881',
+  section_8_ibc: 'NOTICE UNDER SECTION 8 OF THE INSOLVENCY AND BANKRUPTCY CODE, 2016',
+  msme_samadhaan: 'NOTICE UNDER MSMED ACT, 2006 (SAMADHAAN)',
 };
+
+const NOTICE_BODY: Record<LegalNoticeData['noticeType'], (d: LegalNoticeData) => string> = {
+  demand: (d) => `Under instructions from and on behalf of my client ${d.org.name}, I hereby serve upon you the following notice:
+
+1. That my client raised invoice no. ${d.invoiceNumber} dated ${fmtDate(d.invoiceDate)} upon you for an aggregate sum of ${rupees(d.amountClaimed)} for goods/services rendered, which sum remains unpaid as on the date of this notice.
+
+2. That despite repeated reminders and follow-ups, you have wilfully and deliberately failed to discharge the said liability, which constitutes a breach of the express and implied terms of the contract between the parties.
+
+3. That you are accordingly called upon to pay to my client the said principal sum of ${rupees(d.amountClaimed)} together with interest @ ${d.interestRate}% per annum from the date the said amount fell due, within ${d.replyDays ?? 15} (fifteen) days from the receipt of this notice.
+
+4. Take notice that if you fail to comply with the above demand within the stipulated period, my client shall be constrained to institute appropriate civil and/or criminal proceedings against you at your sole risk, cost and consequences, including but not limited to a summary suit under Order XXXVII CPC, and you shall be liable for the same.
+
+Please treat this as final notice.`,
+  section_138: (d) => `WHEREAS my client ${d.org.name} is the holder in due course of cheque(s) bearing reference to invoice no. ${d.invoiceNumber} dated ${fmtDate(d.invoiceDate)}, drawn by you for a sum of ${rupees(d.amountClaimed)}, which was/were presented for encashment and returned unpaid by the bank with the remark "insufficient funds / payment stopped / refer to drawer / account closed".
+
+You are hereby called upon, in terms of the proviso (c) to Section 138 of the Negotiable Instruments Act, 1881, to pay to my client the said cheque amount of ${rupees(d.amountClaimed)} together with all consequential interest, costs and incidental charges within fifteen (15) days from the receipt of this notice, failing which my client shall be constrained to initiate prosecution against you under Section 138 of the said Act, in addition to all other civil and criminal remedies available in law, at your sole risk as to costs and consequences.`,
+  section_8_ibc: (d) => `In terms of Section 8 of the Insolvency and Bankruptcy Code, 2016, read with Rule 5 of the Insolvency and Bankruptcy (Application to Adjudicating Authority) Rules, 2016, my client ${d.org.name}, an operational creditor, hereby calls upon you, the corporate debtor, to make payment of the unpaid operational debt of ${rupees(d.amountClaimed)} arising out of invoice no. ${d.invoiceNumber} dated ${fmtDate(d.invoiceDate)} within ten (10) days from the receipt of this notice.
+
+Failing payment within the said period, or failing the bringing to the notice of the operational creditor of any existence of dispute or record of pendency of any suit or arbitration proceeding within the said period, my client shall be constrained to initiate a Corporate Insolvency Resolution Process (CIRP) against you before the Hon'ble National Company Law Tribunal.`,
+  msme_samadhaan: (d) => `My client ${d.org.name}, a registered Micro/Small enterprise under the Micro, Small and Medium Enterprises Development Act, 2006 ("MSMED Act"), has supplied goods/rendered services to you vide invoice no. ${d.invoiceNumber} dated ${fmtDate(d.invoiceDate)} for an aggregate sum of ${rupees(d.amountClaimed)}.
+
+In terms of Section 15 of the MSMED Act, the buyer is liable to make payment to the supplier on or before the appointed day. In terms of Section 16, where the buyer fails to make payment, the buyer shall, notwithstanding anything contained in any agreement or in any law for the time being in force, be liable to pay compound interest with monthly rests to the supplier on the amount, at three times of the bank rate notified by the Reserve Bank of India, from the appointed day.
+
+You are accordingly called upon to pay to my client the said sum of ${rupees(d.amountClaimed)} along with the statutory interest within fifteen (15) days, failing which my client shall be constrained to refer the matter to the Micro and Small Enterprises Facilitation Council under Section 18 of the MSMED Act.`,
+};
+
+export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> {
+  const pdf = await PDFDocument.create();
+  const fonts = await loadFonts(pdf);
+  let page = pdf.addPage([PAGE_W, PAGE_H]);
+  await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
+
+  let y = PAGE_H - 130;
+  const title = NOTICE_TITLES[d.noticeType];
+  const titleLines = wrapText(title, fonts.bold, 12, PAGE_W - 2 * MARGIN);
+  for (const ln of titleLines) { drawText(page, ln, MARGIN, y, { font: fonts.bold, size: 12, color: COLORS.danger }); y -= 16; }
+
+  y -= 10;
+  drawText(page, `Without Prejudice  ·  Reg. Post/AD  ·  ${fmtDate(new Date().toISOString())}`, MARGIN, y, { font: fonts.italic, size: 9, color: COLORS.muted });
+  y -= 24;
+
+  drawText(page, 'To,', MARGIN, y, { font: fonts.regular, size: 10 }); y -= 14;
+  drawText(page, d.client.name, MARGIN, y, { font: fonts.bold, size: 11 }); y -= 14;
+  if (d.client.address) { drawText(page, d.client.address, MARGIN, y, { font: fonts.regular, size: 10, color: COLORS.muted }); y -= 14; }
+  if (d.client.email) { drawText(page, d.client.email, MARGIN, y, { font: fonts.regular, size: 10, color: COLORS.muted }); y -= 14; }
+  y -= 10;
+  drawText(page, `Sir/Madam,`, MARGIN, y, { font: fonts.regular, size: 10 }); y -= 18;
+
+  const body = NOTICE_BODY[d.noticeType](d);
+  for (const para of body.split('\n\n')) {
+    const lines = wrapText(para, fonts.regular, 10, PAGE_W - 2 * MARGIN);
+    for (const ln of lines) {
+      if (y < 100) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - 130; }
+      drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
+      y -= 14;
+    }
+    y -= 8;
+  }
+
+  y -= 20;
+  if (y < 140) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); y = PAGE_H - 130; }
+  drawText(page, 'Yours faithfully,', MARGIN, y, { font: fonts.regular, size: 10 }); y -= 30;
+  drawText(page, `For and on behalf of ${d.org.name || ''}`, MARGIN, y, { font: fonts.bold, size: 10 });
+
+  drawFooter(page, fonts);
+  const bytes = await pdf.save();
+  return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+}
+
+// ============ Helpers ============
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+  for (const w of words) {
+    const candidate = line ? `${line} ${w}` : w;
+    const width = font.widthOfTextAtSize(candidate, size);
+    if (width > maxWidth && line) { lines.push(line); line = w; }
+    else line = candidate;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
