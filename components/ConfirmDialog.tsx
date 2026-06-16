@@ -114,6 +114,8 @@ export function useConfirmDialog() {
         title: string;
         message: string;
         variant?: 'danger' | 'warning' | 'info';
+        confirmLabel?: string;
+        cancelLabel?: string;
     }): Promise<boolean> => {
         return new Promise((resolve) => {
             setDialogState({
