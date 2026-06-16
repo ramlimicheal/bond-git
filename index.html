@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BILLENTY Invoice Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ["Space Grotesk", "sans-serif"],
+            body: ["Inter", "sans-serif"],
+          },
+          colors: {
+            mint: "#6EE7B7", // Vibrant mint green
+            primary: "#10B981", // Emerald primary to match mint vibe
+            "background-light": "#f3f4f6",
+            "background-dark": "#111111", // darker pure blackish for contrast
+            "card-dark": "#000000",
+            gray: {
+              750: '#2a2d33',
+              850: '#16181c',
+              900: '#111111',
+              950: '#000000',
+            },
+          },
+          borderRadius: {
+            'xl': '0.75rem',
+            '2xl': '1rem',
+            '3xl': '1.5rem',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      /* Default base styles are handled by React classes now for better switching */
+    }
+
+    /* Minimalist Dot Grid Pattern */
+    .bg-grid-pattern {
+      background-color: #000000;
+      background-image: radial-gradient(#333333 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Input underline animation */
+    .input-underline {
+      position: relative;
+    }
+
+    .input-underline::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background-color: #6EE7B7;
+      transition: width 0.3s ease;
+    }
+
+    .input-underline:focus-within::after {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
