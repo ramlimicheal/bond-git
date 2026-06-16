@@ -28,6 +28,7 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
 
     const handleDownloadPDF = async () => {
         try {
+            toast.success('Generating invoice PDF…');
             const blob = await generateInvoicePDF(invoice, org || {});
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -37,8 +38,10 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            toast.success('Invoice PDF downloaded');
         } catch (error) {
             console.error('Failed to generate PDF:', error);
+            toast.error('Failed to generate PDF');
         }
     };
 
