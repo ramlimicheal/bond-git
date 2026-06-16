@@ -1,122 +1,119 @@
-# BILLENTY — Complete Application Review
+# BILLENTY — Full Build Plan
 
-A full audit of the current state of the app: what works, what's stubbed, what's broken, and what's missing. No code changes yet — this is the inventory + recommended roadmap.
+## My opinion on the product
 
----
+Strong concept. The legal angle is the moat — Zoho/QuickBooks/FreshBooks won't touch it because they're global and India's legal recovery system (Section 138 NI Act, Section 8 IBC demand notices, MSME Samadhaan) is jurisdiction-specific. Real risks to plan for:
 
-## 1. Stack & Architecture (current reality)
+1. **Lawyer supply** is the bottleneck, not software. You need 20-50 empanelled advocates across major Indian HCs before launch, or the "live lawyer" promise breaks on day one. Start with a waitlist for live-lawyer tier.
+2. **Paid-only with no free tier is correct for B2B** but you must offer a 14-day full-feature trial — Indian SMBs won't put a card down blind.
+3. **Client portal login is a killer feature** — clients paying via a branded portal is what makes the sender look professional and gets invoices paid 2-3x faster (Stripe/GoCardless data).
+4. **Positioning**: don't call it "invoicing with legal" — call it **"Get paid. Guaranteed."** Lead with outcome, not features.
+5. **Pricing suggestion** (you can override): Starter ₹499/mo (1 user, unlimited invoices, auto notices), Pro ₹1,499/mo (5 users, lawyer escalation credits), Business ₹3,999/mo (unlimited users, dedicated lawyer SLA). Flat per-company, not per-user — per-user pricing kills SMB adoption in India.
 
-- **Frontend:** React 18 + Vite 5 + TailwindCSS 3, `react-router-dom` v6
-- **Routing entrypoint:** `App.tsx` (BrowserRouter + Routes)
-- **Auth:** `auth.context.tsx` reading `localStorage` token; routes wrapped by `RequireAuth`
-- **Data layer:** `api.client.ts` — fully **mocked**, backed by `localStorage` (no real backend in use)
-- **Legacy backend:** `server/` folder (Express + Prisma) exists but is NOT wired to the frontend
-- **PDF:** `jspdf` + `html2canvas` installed
-- **Tests:** vitest configured, two test files present (`__tests__/core.test.ts`, `__tests__/e2e.test.ts`)
+Now the build plan.
 
 ---
 
-## 2. Pages & Features — Status Matrix
+## Phase B — Lovable Cloud Backend (multi-tenant SaaS foundation)
 
-### ✅ Working (UI + mock data persists in localStorage)
+Enable Lovable Cloud. Migrate from localStorage to Postgres with full RLS.
 
+**Schema (org-scoped multi-tenant):**
 
-| Area         | Page                      | Notes                                                             |
-| ------------ | ------------------------- | ----------------------------------------------------------------- |
-| Auth         | Login / Signup            | Mock: any email/password logs in as admin                         |
-| Invoices     | List (`/dashboard`)       | Filter, search, status                                            |
-| Invoices     | Create (`/invoices/new`)  | Saves to localStorage                                             |
-| Invoices     | Details (`/invoices/:id`) | ⚠ receives empty `{}` invoice prop — broken (see §3)              |
-| Quotes       | List / Create / Details   | Details uses **hardcoded mockQuote**, not real data               |
-| Proposals    | List / Create / Details   | Details uses **hardcoded mockProposal**; e-signature canvas works |
-| Clients      | `/clients`                | **Placeholder only** ("No clients found.")                        |
-| Products     | `/products`               | Built                                                             |
-| Accounts     | `/accounts`               | Built (user CRUD via mock)                                        |
-| Settings     | `/settings`               | Tabs: Company, Bank/UPI, Defaults, Notifications, Integrations    |
-| Payment test | `/payment-test`           | Stub gateway component                                            |
+```text
+organizations         (id, name, gstin, pan, logo_url, signature_url, plan, trial_ends_at)
+organization_members  (org_id, user_id, role: owner|admin|accountant|viewer)
+profiles              (id=auth.users.id, full_name, phone, avatar_url)
+user_roles            (user_id, role: super_admin|lawyer|client_portal_user)  -- platform-level
+clients               (id, org_id, name, email, phone, gstin, billing_address, portal_user_id)
+products              (id, org_id, name, sku, price, tax_rate, category)
+invoices              (id, org_id, client_id, number, status, issue_date, due_date, subtotal, tax, total, paid_amount, currency, notes, terms)
+invoice_items         (id, invoice_id, product_id, description, qty, rate, tax_rate, amount)
+quotes                (id, org_id, client_id, ...)  -- same shape as invoices
+proposals             (id, org_id, client_id, title, content_md, status, sent_at, accepted_at)
+payments              (id, invoice_id, amount, method, razorpay_payment_id, paid_at)
+recurring_invoices    (id, org_id, template_invoice_id, frequency, next_run_at, active)
+legal_cases           (id, invoice_id, stage: notice_sent|reply_awaited|escalated|filed, lawyer_id, opened_at)
+legal_documents       (id, case_id, type: demand_letter|sec138|sec8_ibc|reply, pdf_url, generated_at)
+lawyers               (id, user_id, bar_council_no, states[], specialties[], rate_per_hour, verified)
+lawyer_engagements    (id, case_id, lawyer_id, status, fee, scope)
+client_portal_access  (id, client_id, magic_token, last_login_at)
+audit_log             (id, org_id, user_id, action, entity, entity_id, meta, created_at)
+```
 
+**RLS:** every org-scoped table filtered by `org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())`. Roles via separate `user_roles` table + `has_role()` SECURITY DEFINER function. Client portal users see only their own client_id's invoices via magic-token-issued session.
 
-### ⚠ Partial / Broken
+**Migration:** one-shot SQL migration with all tables + GRANTs + RLS + policies. Then rewrite `dataStore.ts` → `useInvoices()`, `useClients()`, etc. as TanStack Query hooks calling server functions.
 
-1. **InvoiceDetailsPage** receives `invoice={{} as any}` — won't render real data
-2. **QuoteDetailsPage** + **ProposalDetailsPage** receive hardcoded mock objects instead of looking up by `:id`
-3. **ClientsPage** is a placeholder; data exists nowhere
-4. **PDF download** — `utils/pdfGenerator.ts` exists, real wiring/quality unverified
-5. **Command Palette** (Cmd+K) — component present, integration into header unclear
-6. **Search bar** in header — input state set, but not actually filtering routes other than the page it's on
-7. `server/` code — disconnected, has TS build errors, no longer the source of truth
-
-### ❌ Not built (claimed in docs, missing in code)
-
-- Real backend persistence (server is detached, frontend uses localStorage)
-- Razorpay / Stripe / UPI QR code generation (only placeholder cards in Settings → Integrations)
-- WhatsApp / Email sending (UI buttons only, no provider)
-- Recurring invoices
-- Tax / GST reports (GSTR-1)
-- Multi-currency live rates
-- Analytics / dashboard charts
-- Expense tracking
-- File uploads (logo, signature image) — currently base64 in localStorage only
-- Client portal
-- Real authentication (password hashing, sessions, OAuth)
+**Auth:** email/password + Google sign-in. Signup flow creates org + makes user the owner. Separate `/portal/login` for client-portal users (magic link).
 
 ---
 
-## 3. Known Bugs to Fix First
+## Phase C — PDF, Email, WhatsApp
 
-1. `/invoices/:id` route passes `{} as any` — should resolve invoice from `:id` param
-2. `/quotes/:id` and `/proposals/:id` use module-level mock instead of looking up by id
-3. `/invoices` redirects to `/dashboard` (cosmetic; dashboard IS the invoice list — confusing naming)
-4. `ClientsPage` is empty placeholder despite docs saying "Complete"
-5. `server/` TS errors (implicit `any` on req/res) — decision needed: keep or delete
-6. Stale build artifacts (`tsconfig.tsbuildinfo`, old vite timestamp files) — already cleaned, watch for recurrence
-7. `__tests__ 2` (file with space) — looks like accidental duplicate from a sync; should be removed
-8. No real Dashboard — the "dashboard" route actually shows the Invoices list
+- **PDF generation**: server function using `pdfkit` or `@react-pdf/renderer` (server-rendered). Branded invoice/quote/proposal PDFs with org logo + signature. Stored in Lovable Cloud Storage bucket `documents/`.
+- **Email**: Resend integration (user provides API key as secret). Templates: invoice sent, payment reminder (3/7/15/30 days overdue), payment received, quote, proposal.
+- **WhatsApp**: "Share on WhatsApp" button → `wa.me/<phone>?text=<invoice link>`. Real WhatsApp Business API is Phase E (needs Meta approval).
+- **Client portal pages**: `/portal/invoices/:token` — public view-only invoice with Pay Now button. No login needed for view; login needed to see history.
 
 ---
 
-## 4. Recommended Roadmap
+## Phase D — Payments (Razorpay + UPI)
 
-### Phase A — Stabilize what's there (1 session)
-
-- Wire `:id` lookups for Invoice / Quote / Proposal details from the mock store
-- Build a real Clients page (CRUD on top of localStorage, matching Products pattern)
-- Build a true Dashboard (KPIs: total revenue, outstanding, overdue, recent activity)
-- Delete or quarantine the broken `server/` folder & the `__tests__ 2` file
-- Fix header search to filter the current list page
-
-### Phase B — Real backend (recommended: Lovable Cloud)
-
-Replace `api.client.ts` localStorage layer with Lovable Cloud (Postgres + Auth + Storage + server functions). Tables: `clients`, `products`, `invoices`, `invoice_items`, `quotes`, `quote_items`, `proposals`, `proposal_sections`, `company_settings`, `user_roles`. RLS keyed to `auth.uid()`.
-
-### Phase C — PDF + Sharing
-
-- Solidify `pdfGenerator` for Invoice, Quote, Proposal (use existing print views)
-- Email sending via a server function (Resend or similar)
-- WhatsApp share link (already a `wa.me` URL — confirm it works)
-
-### Phase D — Payments (India-first)
-
-- Razorpay integration (orders + webhook → mark invoice paid)
-- UPI QR code generation from saved UPI ID (`qrcode` lib, no backend needed)
-- Stripe for international (optional)
-
-### Phase E — Polish
-
-- Recurring invoices (cron via server function)
-- GST reports export (CSV/PDF)
-- Analytics dashboard (Recharts)
-- Real auth with roles (Owner / Accountant / Viewer)
-- File uploads to storage (logo, signatures) instead of base64
+- Razorpay BYOK (user enters their own keys — they receive money, not us).
+- Server function creates Razorpay order from invoice. Public route `/api/public/razorpay-webhook` verifies signature and updates `payments` + `invoices.status`.
+- UPI QR fallback: generate UPI intent QR from org's VPA on invoice PDF and client portal.
+- Auto-reconciliation: webhook marks invoice paid → triggers thank-you email.
 
 ---
 
-## 5. Question for You
+## Phase E — Legal Module + Polish
 
-Which would you like to tackle first?
+**Auto-generated legal notices:**
+- Trigger: invoice >30 days overdue OR manual "Escalate to legal" button.
+- Templates: Demand letter (Indian Contract Act), Section 138 NI Act notice (for bounced cheques), Section 8 IBC demand (for amounts >₹1L), MSME Samadhaan filing draft.
+- Generated as PDF with org details, client details, invoice details, amount, interest at 18% p.a., 15-day reply window. Sent via email + downloadable for physical dispatch.
+- Creates a `legal_cases` row, tracks stage.
 
-- **(A) Stabilize Phase A** — fix the broken details pages, real Clients, real Dashboard, cleanup. Stays frontend-only.
-- **(B) Jump to Phase B** — enable Lovable Cloud now and migrate data layer to a real database with auth.
-- **(C) Specific feature** — e.g., "just get Razorpay working" or "just make PDF download work end-to-end."
+**Lawyer marketplace:**
+- Lawyers onboard via separate signup (`/lawyers/join`) with bar council verification.
+- "Engage a lawyer" button on a case → matched by state + specialty → lawyer accepts → chat thread + document sharing.
+- In-app chat (Lovable AI for first-draft replies, real lawyer reviews).
+- Fee held in escrow concept (Phase E.2 — Razorpay Route, deferred).
 
-Tell me which and I'll produce a focused implementation plan for that phase.
+**Other polish:**
+- Recurring invoices (cron via pg_cron + public route).
+- GST reports (GSTR-1 summary export).
+- Dashboard analytics (Recharts: revenue trend, top clients, ageing report).
+- Role-based access enforcement in UI.
+- Audit log viewer for owners.
+- Onboarding wizard: company details → upload logo → first client → first invoice.
+- Pricing page + Razorpay subscription for the SaaS itself (Phase E.3).
+
+---
+
+## Technical Details
+
+- **Stack stays TanStack Start** (already in project). Server functions for all reads/writes. `/api/public/*` for Razorpay webhook + cron.
+- **Storage buckets**: `logos/` (public), `signatures/` (private), `documents/` (private, signed URLs).
+- **Secrets**: `RESEND_API_KEY`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
+- **PDF rendering** runs in server function (Cloudflare Worker compatible — use `pdf-lib`, not `puppeteer`/`sharp`).
+- **AI** (Lovable AI Gateway, gemini-3-flash): legal notice draft refinement, proposal writing assistant, payment reminder tone tuning, lawyer chat first-draft.
+- **Lawyer/client portal** = separate route trees (`/portal/*`, `/lawyer/*`) with their own auth-gated layouts.
+
+---
+
+## Execution Order
+
+1. **B1**: Enable Lovable Cloud, run schema migration, wire auth (email + Google), org creation flow.
+2. **B2**: Migrate clients/products/invoices/quotes/proposals from localStorage → server functions + RLS. Verify all existing pages still work.
+3. **C1**: PDF generation + storage. Download button works end-to-end.
+4. **C2**: Resend email integration + templates + reminder cron.
+5. **C3**: Client portal (magic-link view + Pay button placeholder).
+6. **D1**: Razorpay order creation + webhook + payment reconciliation.
+7. **D2**: UPI QR on PDFs and portal.
+8. **E1**: Legal notice templates + auto-escalation rules + `legal_cases` UI.
+9. **E2**: Lawyer signup, marketplace matching, in-app chat.
+10. **E3**: Recurring invoices, GST reports, analytics, role enforcement, onboarding wizard, SaaS pricing page.
+
+I will check in after each major phase (B done, C done, D done, E done) so you can review before continuing. Approve this plan and I'll start with B1.
