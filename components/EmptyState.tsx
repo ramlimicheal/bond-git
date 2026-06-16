@@ -69,7 +69,7 @@ export const NoSearchResultsEmpty: React.FC<{ query: string }> = ({ query }) => 
 
 export const NoUsersEmpty: React.FC<{ onCreateUser: () => void }> = ({ onCreateUser }) => (
     <EmptyState
-        icon={<Icons.Profile size={32} className="text-gray-400 dark:text-gray-500" />}
+        icon={<Icons.User size={32} className="text-gray-400 dark:text-gray-500" />}
         title="No users yet"
         description="Add team members to help manage your invoices."
         action={{
