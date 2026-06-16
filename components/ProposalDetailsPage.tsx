@@ -4,6 +4,7 @@ import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import { generateProposalPDF } from '../utils/pdfGenerator';
+import { useOrg } from '../org.context';
 
 interface ProposalDetailsPageProps {
     proposal: Proposal;
@@ -19,6 +20,7 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
     onDelete,
 }) => {
     const { confirm } = useConfirmDialog();
+    const { org } = useOrg();
     const signatureRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
     const handleDownloadPDF = async () => {
         try {
             toast.success('Generating proposal PDF...');
-            const blob = await generateProposalPDF(proposal);
+            const blob = await generateProposalPDF(proposal, org || {});
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

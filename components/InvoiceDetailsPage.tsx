@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Invoice } from '../types';
 import { Icons } from './Icon';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
-import { downloadInvoicePDF } from './InvoicePrintView';
+import { useOrg } from '../org.context';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 
@@ -21,13 +21,14 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
 }) => {
     const { confirm } = useConfirmDialog();
     const invoiceRef = useRef<HTMLDivElement>(null);
+    const { org } = useOrg();
 
     const isPaid = invoice.status === 'Paid';
     const totalAmount = invoice.amountDue + invoice.amountPaid;
 
     const handleDownloadPDF = async () => {
         try {
-            const blob = await generateInvoicePDF(invoice);
+            const blob = await generateInvoicePDF(invoice, org || {});
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

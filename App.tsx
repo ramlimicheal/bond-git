@@ -18,6 +18,10 @@ import { PaymentGateway } from './components/PaymentGateway';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
 import DashboardPage from './components/Dashboard';
+import SalesOverviewPage from './components/SalesOverviewPage';
+import FinanceReportsPage from './components/FinanceReportsPage';
+import LegalCasesPage from './components/LegalCasesPage';
+import LawyersPage from './components/LawyersPage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { AuthProvider, useAuth } from './auth.context';
 import { OrgProvider } from './org.context';
@@ -129,6 +133,7 @@ function AppContent() {
     const getCurrentPage = (): Page => {
         const path = location.pathname;
         if (path === '/dashboard' || path === '/') return Page.DASHBOARD;
+        if (path === '/sales') return Page.SALES_OVERVIEW;
         if (path === '/invoices') return Page.INVOICES;
         if (path.startsWith('/invoices/new')) return Page.CREATE_INVOICE;
         if (path.startsWith('/invoices/')) return Page.INVOICE_DETAILS;
@@ -142,12 +147,16 @@ function AppContent() {
         if (path === '/products') return Page.PRODUCTS;
         if (path === '/settings') return Page.SETTINGS;
         if (path === '/accounts') return Page.ACCOUNTS;
+        if (path === '/reports') return Page.REPORTS;
+        if (path === '/legal/cases') return Page.LEGAL_CASES;
+        if (path === '/legal/lawyers') return Page.LAWYERS;
         return Page.DASHBOARD;
     };
 
     const handleNavigate = (page: Page, id?: string) => {
         switch (page) {
             case Page.DASHBOARD: navigate('/dashboard'); break;
+            case Page.SALES_OVERVIEW: navigate('/sales'); break;
             case Page.INVOICES: navigate('/invoices'); break;
             case Page.INVOICE_DETAILS: navigate(id ? `/invoices/${id}` : '/invoices'); break;
             case Page.CREATE_INVOICE: navigate('/invoices/new'); break;
@@ -161,6 +170,9 @@ function AppContent() {
             case Page.PRODUCTS: navigate('/products'); break;
             case Page.SETTINGS: navigate('/settings'); break;
             case Page.ACCOUNTS: navigate('/accounts'); break;
+            case Page.REPORTS: navigate('/reports'); break;
+            case Page.LEGAL_CASES: navigate('/legal/cases'); break;
+            case Page.LAWYERS: navigate('/legal/lawyers'); break;
             default: navigate('/dashboard');
         }
     };
@@ -201,6 +213,10 @@ function AppContent() {
                     <Routes>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/sales" element={<SalesOverviewPage />} />
+                        <Route path="/reports" element={<FinanceReportsPage />} />
+                        <Route path="/legal/cases" element={<LegalCasesPage />} />
+                        <Route path="/legal/lawyers" element={<LawyersPage />} />
                         <Route path="/accounts" element={<AccountsPage searchQuery={searchQuery} />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/clients" element={<ClientsPage />} />

@@ -48,7 +48,13 @@ import {
   Share2,
   Clock,
   Settings,
-  User
+  User,
+  TrendingUp,
+  AlertCircle,
+  Briefcase,
+  Scale,
+  Gavel,
+  BarChart3
 } from 'lucide-react';
 
 export const Icons = {
@@ -100,7 +106,13 @@ export const Icons = {
   Share: Share2,
   Clock: Clock,
   Settings: Settings,
-  User: User
+  User: User,
+  TrendingUp: TrendingUp,
+  AlertCircle: AlertCircle,
+  Briefcase: Briefcase,
+  Scale: Scale,
+  Gavel: Gavel,
+  BarChart: BarChart3
 };
 
 export type IconName = keyof typeof Icons;

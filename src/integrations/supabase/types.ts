@@ -399,7 +399,7 @@ export type Database = {
           specialties: string[]
           states: string[]
           updated_at: string
-          user_id: string
+          user_id: string | null
           verified: boolean
         }
         Insert: {
@@ -415,7 +415,7 @@ export type Database = {
           specialties?: string[]
           states?: string[]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           verified?: boolean
         }
         Update: {
@@ -431,7 +431,7 @@ export type Database = {
           specialties?: string[]
           states?: string[]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           verified?: boolean
         }
         Relationships: []
