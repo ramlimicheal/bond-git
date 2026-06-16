@@ -110,42 +110,43 @@ function useTable<T extends { id: string }>(m: Mapper<T>) {
   const { orgId, loading: orgLoading } = useOrg();
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
+  const db = supabase as any;
 
   const refresh = useCallback(async () => {
     if (!orgId) { setItems([]); setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await supabase.from(m.table).select('*').eq('org_id', orgId).order('created_at', { ascending: false });
+    const { data, error } = await db.from(m.table).select('*').eq('org_id', orgId).order('created_at', { ascending: false });
     if (!error && data) setItems(data.map(m.toApp));
     setLoading(false);
-  }, [orgId, m.table]);
+  }, [orgId, m.table, db]);
 
   useEffect(() => { if (!orgLoading) refresh(); }, [orgLoading, refresh]);
 
   const create = useCallback(async (data: Omit<T, 'id'> | Partial<T>): Promise<T | null> => {
     if (!orgId) return null;
     const row = m.toRow(data, orgId);
-    const { data: inserted, error } = await supabase.from(m.table).insert(row).select('*').single();
+    const { data: inserted, error } = await db.from(m.table).insert(row).select('*').single();
     if (error || !inserted) { console.error(`[${m.table}] insert`, error); return null; }
     const mapped = m.toApp(inserted);
     setItems((prev) => [mapped, ...prev]);
     return mapped;
-  }, [orgId, m]);
+  }, [orgId, m, db]);
 
   const update = useCallback(async (id: string, patch: Partial<T>) => {
     if (!orgId) return;
     const row = m.toRow({ ...items.find((i) => i.id === id), ...patch }, orgId);
-    const { data: updated, error } = await supabase.from(m.table).update(row).eq('id', id).select('*').single();
+    const { data: updated, error } = await db.from(m.table).update(row).eq('id', id).select('*').single();
     if (error || !updated) { console.error(`[${m.table}] update`, error); return; }
     const mapped = m.toApp(updated);
     setItems((prev) => prev.map((it) => (it.id === id ? mapped : it)));
-  }, [orgId, items, m]);
+  }, [orgId, items, m, db]);
 
   const remove = useCallback(async (id: string) => {
     if (!orgId) return;
-    const { error } = await supabase.from(m.table).delete().eq('id', id);
+    const { error } = await db.from(m.table).delete().eq('id', id);
     if (error) { console.error(`[${m.table}] delete`, error); return; }
     setItems((prev) => prev.filter((it) => it.id !== id));
-  }, [orgId, m.table]);
+  }, [orgId, m.table, db]);
 
   const getById = useCallback((id: string) => items.find((it) => it.id === id), [items]);
 
