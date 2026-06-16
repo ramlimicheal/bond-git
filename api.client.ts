@@ -1,6 +1,40 @@
 import { ApiInvoice, ApiUser, AuthResponse } from './api.types.ts';
 import { INVOICES_DATA, USERS_DATA } from './constants.ts';
 import type { Invoice, User } from './types.ts';
+import { supabase } from './src/integrations/supabase/client';
+
+const db = supabase as any;
+
+async function getCurrentOrgId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await db.from('organization_members')
+    .select('org_id').eq('user_id', user.id)
+    .order('joined_at', { ascending: true }).limit(1).maybeSingle();
+  return data?.org_id ?? null;
+}
+
+function rowToApiInvoice(r: any): ApiInvoice {
+  const total = Number(r.total);
+  const paid = Number(r.amount_paid);
+  return {
+    id: r.id,
+    number: r.number,
+    status: (r.status?.[0]?.toUpperCase() + r.status?.slice(1)) || 'Draft',
+    clientName: r.client_name ?? '',
+    clientType: r.client_type ?? '',
+    issuedAt: r.issue_date ?? '',
+    dueAt: r.due_date ?? '',
+    amountPaid: paid,
+    amountDue: total - paid,
+    items: (r.items ?? []).map((it: any, i: number) => ({
+      id: String(it.id ?? i),
+      description: it.description ?? '',
+      quantity: Number(it.quantity ?? 1),
+      price: Number(it.price ?? 0),
+    })),
+  };
+}
 
 const STORAGE_KEYS = {
   invoices: 'billenty_invoices',
@@ -33,7 +67,7 @@ function parseNumericId(id: string): number {
 
 function toApiInvoice(invoice: Invoice): ApiInvoice {
   return {
-    id: parseNumericId(invoice.id),
+    id: invoice.id,
     number: invoice.number,
     status: invoice.status,
     clientName: invoice.clientName,
@@ -43,7 +77,7 @@ function toApiInvoice(invoice: Invoice): ApiInvoice {
     amountPaid: invoice.amountPaid,
     amountDue: invoice.amountDue,
     items: invoice.items.map((item, index) => ({
-      id: parseNumericId(item.id) || index + 1,
+      id: String(item.id ?? index),
       description: item.description,
       quantity: item.quantity,
       price: item.price,
@@ -122,66 +156,66 @@ export async function changePassword(currentPassword: string, newPassword: strin
   return { message: 'Password changed successfully' };
 }
 
-export async function fetchInvoices(params?: { search?: string; status?: string }): Promise<ApiInvoice[]> {
-  await wait();
-  const search = params?.search?.toLowerCase().trim();
-  const status = params?.status;
-  return getInvoices()
-    .filter((invoice) => !search || invoice.number.toLowerCase().includes(search) || invoice.clientName.toLowerCase().includes(search))
-    .filter((invoice) => !status || invoice.status === status)
-    .map(toApiInvoice);
+function toDbDate(s: string | undefined | null): string | null {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
-export async function createInvoice(payload: Omit<ApiInvoice, 'id' | 'items'> & { items: { description: string; quantity: number; price: number }[] }): Promise<ApiInvoice> {
-  await wait();
-  const newInvoice: Invoice = {
-    id: String(Date.now()),
-    number: payload.number,
-    status: payload.status as Invoice['status'],
-    clientName: payload.clientName,
-    clientType: payload.clientType,
-    issuedDate: payload.issuedAt,
-    dueDate: payload.dueAt,
-    amountPaid: payload.amountPaid,
-    amountDue: payload.amountDue,
-    items: payload.items.map((item, index) => ({ ...item, id: `${Date.now()}-${index}` })),
+function payloadToRow(payload: any, orgId: string) {
+  const total = (payload.amountPaid ?? 0) + (payload.amountDue ?? 0);
+  return {
+    org_id: orgId,
+    number: payload.number || `INV-${Date.now()}`,
+    status: (payload.status || 'Draft').toLowerCase(),
+    client_name: payload.clientName ?? null,
+    client_type: payload.clientType ?? null,
+    issue_date: toDbDate(payload.issuedAt) ?? new Date().toISOString().slice(0, 10),
+    due_date: toDbDate(payload.dueAt),
+    amount_paid: payload.amountPaid ?? 0,
+    subtotal: total,
+    total,
+    items: (payload.items ?? []).map((it: any, i: number) => ({
+      id: String(it.id ?? `${Date.now()}-${i}`),
+      description: it.description,
+      quantity: it.quantity,
+      price: it.price,
+    })),
   };
-  const invoices = [newInvoice, ...getInvoices()];
-  saveInvoices(invoices);
-  return toApiInvoice(newInvoice);
 }
 
-export async function deleteInvoice(id: number): Promise<void> {
-  await wait();
-  saveInvoices(getInvoices().filter((invoice) => parseNumericId(invoice.id) !== id));
+export async function fetchInvoices(params?: { search?: string; status?: string }): Promise<ApiInvoice[]> {
+  const orgId = await getCurrentOrgId();
+  if (!orgId) return [];
+  let q = db.from('invoices').select('*').eq('org_id', orgId).order('created_at', { ascending: false });
+  if (params?.status) q = q.eq('status', params.status.toLowerCase());
+  const { data, error } = await q;
+  if (error || !data) return [];
+  const search = params?.search?.toLowerCase().trim();
+  return (data as any[])
+    .map(rowToApiInvoice)
+    .filter((inv) => !search || inv.number.toLowerCase().includes(search) || inv.clientName.toLowerCase().includes(search));
 }
 
-export async function updateInvoice(
-  id: number,
-  payload: Omit<ApiInvoice, 'id' | 'items'> & { items: { description: string; quantity: number; price: number }[] }
-): Promise<ApiInvoice> {
-  await wait();
-  let updatedInvoice: Invoice | undefined;
-  const invoices = getInvoices().map((invoice) => {
-    if (parseNumericId(invoice.id) !== id) return invoice;
-    updatedInvoice = {
-      id: invoice.id,
-      number: payload.number,
-      status: payload.status as Invoice['status'],
-      clientName: payload.clientName,
-      clientType: payload.clientType,
-      issuedDate: payload.issuedAt,
-      dueDate: payload.dueAt,
-      amountPaid: payload.amountPaid,
-      amountDue: payload.amountDue,
-      items: payload.items.map((item, index) => ({ ...item, id: `${id}-${index}` })),
-    };
-    return updatedInvoice;
-  });
+export async function createInvoice(payload: any): Promise<ApiInvoice> {
+  const orgId = await getCurrentOrgId();
+  if (!orgId) throw new Error('No organization');
+  const { data, error } = await db.from('invoices').insert(payloadToRow(payload, orgId)).select('*').single();
+  if (error || !data) throw new Error(error?.message || 'Create failed');
+  return rowToApiInvoice(data);
+}
 
-  if (!updatedInvoice) throw new Error('Invoice not found');
-  saveInvoices(invoices);
-  return toApiInvoice(updatedInvoice);
+export async function deleteInvoice(id: string | number): Promise<void> {
+  const { error } = await db.from('invoices').delete().eq('id', String(id));
+  if (error) throw new Error(error.message);
+}
+
+export async function updateInvoice(id: string | number, payload: any): Promise<ApiInvoice> {
+  const orgId = await getCurrentOrgId();
+  if (!orgId) throw new Error('No organization');
+  const { data, error } = await db.from('invoices').update(payloadToRow(payload, orgId)).eq('id', String(id)).select('*').single();
+  if (error || !data) throw new Error(error?.message || 'Update failed');
+  return rowToApiInvoice(data);
 }
 
 export async function fetchUsers(): Promise<ApiUser[]> {

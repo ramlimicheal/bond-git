@@ -29,11 +29,11 @@ const ProductsPage: React.FC = () => {
     const openCreate = () => { setForm(empty); setEditingId(null); setShowForm(true); };
     const openEdit = (p: Product) => { setForm({ name: p.name, description: p.description || '', category: p.category, price: p.price, taxRate: p.taxRate, unit: p.unit }); setEditingId(p.id); setShowForm(true); };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name) { toast.error('Name required'); return; }
-        if (editingId) { update(editingId, form); toast.success('Product updated'); }
-        else { const p = create({ ...form, createdAt: new Date().toISOString() }); setSelectedId(p.id); toast.success('Product added'); }
+        if (editingId) { await update(editingId, form); toast.success('Product updated'); }
+        else { const p = await create({ ...form, createdAt: new Date().toISOString() }); if (p) setSelectedId(p.id); toast.success('Product added'); }
         setShowForm(false);
     };
 

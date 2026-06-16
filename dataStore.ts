@@ -1,109 +1,166 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { Client, Product, Quote, Proposal } from './types';
+import { supabase } from './src/integrations/supabase/client';
+import { useOrg } from './org.context';
+import type { Client, Product, Quote, Proposal, Invoice } from './types';
 
-const STORAGE_KEYS = {
-  clients: 'billenty_clients',
-  products: 'billenty_products',
-  quotes: 'billenty_quotes',
-  proposals: 'billenty_proposals',
-} as const;
+// ============ MAPPERS ============
+const mapClient = (r: any): Client => ({
+  id: r.id, name: r.name, company: r.company ?? undefined, email: r.email ?? '',
+  phone: r.phone ?? undefined, address: r.address_line1 ?? undefined,
+  city: r.city ?? undefined, state: r.state ?? undefined, pincode: r.pincode ?? undefined,
+  gstin: r.gstin ?? undefined, pan: r.pan ?? undefined, notes: r.notes ?? undefined,
+  createdAt: r.created_at,
+});
+const clientToRow = (c: Partial<Client>, orgId: string) => ({
+  org_id: orgId, name: c.name!, company: c.company ?? null, email: c.email ?? null,
+  phone: c.phone ?? null, address_line1: c.address ?? null, city: c.city ?? null,
+  state: c.state ?? null, pincode: c.pincode ?? null, gstin: c.gstin ?? null,
+  pan: c.pan ?? null, notes: c.notes ?? null,
+});
 
-function read<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
-  const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch { return fallback; }
-}
+const mapProduct = (r: any): Product => ({
+  id: r.id, name: r.name, description: r.description ?? undefined,
+  category: (r.category as Product['category']) ?? 'Other',
+  price: Number(r.price), taxRate: Number(r.tax_rate), unit: r.unit ?? 'unit',
+  createdAt: r.created_at,
+});
+const productToRow = (p: Partial<Product>, orgId: string) => ({
+  org_id: orgId, name: p.name!, description: p.description ?? null,
+  category: p.category ?? null, price: p.price ?? 0, tax_rate: p.taxRate ?? 18,
+  unit: p.unit ?? 'unit',
+});
 
-function write<T>(key: string, value: T) {
-  localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new CustomEvent('billenty:store', { detail: { key } }));
-}
+const fmtDate = (d: string | undefined) => {
+  if (!d) return '';
+  // already formatted "10 Jan 2026" => store as ISO
+  const parsed = new Date(d);
+  if (isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
+  return parsed.toISOString().slice(0, 10);
+};
+const showDate = (d: string | null | undefined) =>
+  d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
 
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+const mapQuote = (r: any): Quote => ({
+  id: r.id, number: r.number, status: (r.status?.[0]?.toUpperCase() + r.status?.slice(1)) as Quote['status'],
+  clientName: r.client_name ?? '', clientType: r.client_type ?? '',
+  createdDate: showDate(r.issue_date), validUntil: showDate(r.valid_until),
+  total: Number(r.total), items: (r.items || []) as Quote['items'],
+});
+const quoteToRow = (q: Partial<Quote>, orgId: string) => ({
+  org_id: orgId,
+  number: q.number || `QT-${Date.now()}`,
+  status: (q.status || 'Draft').toLowerCase(),
+  client_name: q.clientName ?? null, client_type: q.clientType ?? null,
+  issue_date: fmtDate(q.createdDate), valid_until: q.validUntil ? fmtDate(q.validUntil) : null,
+  total: q.total ?? 0, subtotal: q.total ?? 0,
+  items: q.items ?? [],
+});
 
-// ============ SEED DATA ============
-const SEED_CLIENTS: Client[] = [
-  { id: 'c1', name: 'Rahul Sharma', company: 'Tech Solutions Inc.', email: 'rahul@techsolutions.in', phone: '+91 98765 43210', city: 'Mumbai', state: 'Maharashtra', gstin: '27AABCT1234A1Z5', createdAt: new Date().toISOString() },
-  { id: 'c2', name: 'Priya Patel', company: 'Creative Studio', email: 'priya@creativestudio.com', phone: '+91 97654 32109', city: 'Bangalore', state: 'Karnataka', createdAt: new Date().toISOString() },
-  { id: 'c3', name: 'Amit Kumar', company: 'StartUp Hub', email: 'amit@startuphub.io', phone: '+91 96543 21098', city: 'Delhi', state: 'Delhi', createdAt: new Date().toISOString() },
-];
+const mapProposal = (r: any): Proposal => ({
+  id: r.id, number: r.number, title: r.title,
+  status: (r.status?.[0]?.toUpperCase() + r.status?.slice(1)) as Proposal['status'],
+  clientName: r.client_name ?? '', clientEmail: r.client_email ?? '',
+  projectType: r.project_type ?? '',
+  createdDate: showDate(r.issue_date), validUntil: showDate(r.valid_until),
+  totalValue: Number(r.total_value), sections: (r.sections || []) as Proposal['sections'],
+  clientSignature: r.client_signature ?? undefined,
+  clientSignedAt: r.client_signed_at ? showDate(r.client_signed_at) : undefined,
+  senderSignature: r.sender_signature ?? undefined,
+  senderSignedAt: r.sender_signed_at ? showDate(r.sender_signed_at) : undefined,
+});
+const proposalToRow = (p: Partial<Proposal>, orgId: string) => ({
+  org_id: orgId,
+  number: p.number || `PROP-${Date.now()}`,
+  title: p.title || 'Untitled Proposal',
+  status: (p.status || 'Draft').toLowerCase(),
+  client_name: p.clientName ?? null, client_email: p.clientEmail ?? null,
+  project_type: p.projectType ?? null,
+  issue_date: fmtDate(p.createdDate), valid_until: p.validUntil ? fmtDate(p.validUntil) : null,
+  total_value: p.totalValue ?? 0,
+  sections: p.sections ?? [],
+  client_signature: p.clientSignature ?? null,
+  sender_signature: p.senderSignature ?? null,
+});
 
-const SEED_PRODUCTS: Product[] = [
-  { id: 'p1', name: 'Logo Design', description: 'Custom brand identity package', category: 'Design', price: 15000, taxRate: 18, unit: 'project', createdAt: new Date().toISOString() },
-  { id: 'p2', name: 'Website Development', description: 'Full-stack website with CMS', category: 'Development', price: 75000, taxRate: 18, unit: 'project', createdAt: new Date().toISOString() },
-  { id: 'p3', name: 'Strategic Consulting', description: 'Business strategy session', category: 'Consulting', price: 5000, taxRate: 18, unit: 'hour', createdAt: new Date().toISOString() },
-  { id: 'p4', name: 'Maintenance Support', description: 'Monthly maintenance retainer', category: 'Support', price: 12000, taxRate: 18, unit: 'month', createdAt: new Date().toISOString() },
-];
-
-const SEED_QUOTES: Quote[] = [
-  { id: 'q1', number: 'QT-2026-0001', status: 'Sent', clientName: 'Tech Solutions Inc.', clientType: 'Software Development', createdDate: '10 Jan 2026', validUntil: '10 Feb 2026', total: 15000, items: [{ id: 'qi1', description: 'Web Application Development', quantity: 1, price: 15000 }] },
-  { id: 'q2', number: 'QT-2026-0002', status: 'Draft', clientName: 'Creative Agency', clientType: 'Branding', createdDate: '08 Jan 2026', validUntil: '08 Feb 2026', total: 5500, items: [{ id: 'qi2', description: 'Brand Identity Package', quantity: 1, price: 5500 }] },
-  { id: 'q3', number: 'QT-2026-0003', status: 'Accepted', clientName: 'Global Enterprises', clientType: 'Consulting', createdDate: '05 Jan 2026', validUntil: '05 Feb 2026', total: 25000, items: [{ id: 'qi3', description: 'Strategic Consulting Package', quantity: 1, price: 25000 }] },
-];
-
-const SEED_PROPOSALS: Proposal[] = [
-  { id: 'pr1', number: 'PROP-2026-0001', title: 'Logo Design & Brand Identity', status: 'Signed', clientName: 'Rahul Sharma', clientEmail: 'rahul@techsolutions.in', projectType: 'Branding', createdDate: '05 Jan 2026', validUntil: '05 Feb 2026', totalValue: 45000, sections: [], clientSignature: 'Rahul Sharma', clientSignedAt: '07 Jan 2026', senderSignature: 'Billenty User', senderSignedAt: '05 Jan 2026' },
-  { id: 'pr2', number: 'PROP-2026-0002', title: 'E-Commerce Website Development', status: 'Sent', clientName: 'Priya Patel', clientEmail: 'priya@creativestudio.com', projectType: 'Web Development', createdDate: '08 Jan 2026', validUntil: '08 Feb 2026', totalValue: 150000, sections: [] },
-  { id: 'pr3', number: 'PROP-2026-0003', title: 'Mobile App UI/UX Design', status: 'Draft', clientName: 'Amit Kumar', clientEmail: 'amit@startuphub.io', projectType: 'UI/UX Design', createdDate: '10 Jan 2026', validUntil: '10 Feb 2026', totalValue: 75000, sections: [] },
-];
+const mapInvoice = (r: any): Invoice => ({
+  id: r.id, number: r.number,
+  status: (r.status?.[0]?.toUpperCase() + r.status?.slice(1)) as Invoice['status'],
+  clientName: r.client_name ?? '', clientType: r.client_type ?? '',
+  issuedDate: showDate(r.issue_date), dueDate: showDate(r.due_date),
+  amountPaid: Number(r.amount_paid), amountDue: Number(r.total) - Number(r.amount_paid),
+  items: (r.items || []) as Invoice['items'],
+});
+const invoiceToRow = (inv: Partial<Invoice>, orgId: string) => {
+  const total = (inv.amountPaid ?? 0) + (inv.amountDue ?? 0);
+  return {
+    org_id: orgId,
+    number: inv.number || `INV-${Date.now()}`,
+    status: (inv.status || 'Draft').toLowerCase(),
+    client_name: inv.clientName ?? null, client_type: inv.clientType ?? null,
+    issue_date: fmtDate(inv.issuedDate), due_date: inv.dueDate ? fmtDate(inv.dueDate) : null,
+    amount_paid: inv.amountPaid ?? 0, total, subtotal: total,
+    items: inv.items ?? [],
+  };
+};
 
 // ============ GENERIC HOOK ============
-function useCollection<T extends { id: string }>(key: string, seed: T[]) {
-  const [items, setItems] = useState<T[]>(() => {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-    if (!raw) {
-      if (typeof window !== 'undefined') localStorage.setItem(key, JSON.stringify(seed));
-      return seed;
-    }
-    try { return JSON.parse(raw) as T[]; } catch { return seed; }
-  });
+type Mapper<T> = { table: string; toApp: (r: any) => T; toRow: (item: any, orgId: string) => any };
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.key === key) setItems(read<T[]>(key, seed));
-    };
-    const storageHandler = (e: StorageEvent) => {
-      if (e.key === key) setItems(read<T[]>(key, seed));
-    };
-    window.addEventListener('billenty:store', handler);
-    window.addEventListener('storage', storageHandler);
-    return () => {
-      window.removeEventListener('billenty:store', handler);
-      window.removeEventListener('storage', storageHandler);
-    };
-  }, [key]); // eslint-disable-line
+function useTable<T extends { id: string }>(m: Mapper<T>) {
+  const { orgId, loading: orgLoading } = useOrg();
+  const [items, setItems] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+  const db = supabase as any;
 
-  const create = useCallback((data: Omit<T, 'id'>) => {
-    const item = { ...data, id: uid() } as T;
-    const next = [item, ...read<T[]>(key, seed)];
-    write(key, next);
-    return item;
-  }, [key]);
+  const refresh = useCallback(async () => {
+    if (!orgId) { setItems([]); setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await db.from(m.table).select('*').eq('org_id', orgId).order('created_at', { ascending: false });
+    if (!error && data) setItems(data.map(m.toApp));
+    setLoading(false);
+  }, [orgId, m.table, db]);
 
-  const update = useCallback((id: string, patch: Partial<T>) => {
-    const next = read<T[]>(key, seed).map((it) => (it.id === id ? { ...it, ...patch } : it));
-    write(key, next);
-  }, [key]);
+  useEffect(() => { if (!orgLoading) refresh(); }, [orgLoading, refresh]);
 
-  const remove = useCallback((id: string) => {
-    const next = read<T[]>(key, seed).filter((it) => it.id !== id);
-    write(key, next);
-  }, [key]);
+  const create = useCallback(async (data: Omit<T, 'id'> | Partial<T>): Promise<T | null> => {
+    if (!orgId) return null;
+    const row = m.toRow(data, orgId);
+    const { data: inserted, error } = await db.from(m.table).insert(row).select('*').single();
+    if (error || !inserted) { console.error(`[${m.table}] insert`, error); return null; }
+    const mapped = m.toApp(inserted);
+    setItems((prev) => [mapped, ...prev]);
+    return mapped;
+  }, [orgId, m, db]);
+
+  const update = useCallback(async (id: string, patch: Partial<T>) => {
+    if (!orgId) return;
+    const row = m.toRow({ ...items.find((i) => i.id === id), ...patch }, orgId);
+    const { data: updated, error } = await db.from(m.table).update(row).eq('id', id).select('*').single();
+    if (error || !updated) { console.error(`[${m.table}] update`, error); return; }
+    const mapped = m.toApp(updated);
+    setItems((prev) => prev.map((it) => (it.id === id ? mapped : it)));
+  }, [orgId, items, m, db]);
+
+  const remove = useCallback(async (id: string) => {
+    if (!orgId) return;
+    const { error } = await db.from(m.table).delete().eq('id', id);
+    if (error) { console.error(`[${m.table}] delete`, error); return; }
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }, [orgId, m.table, db]);
 
   const getById = useCallback((id: string) => items.find((it) => it.id === id), [items]);
 
-  return { items, create, update, remove, getById };
+  return { items, loading, create, update, remove, getById, refresh };
 }
 
-export const useClients = () => useCollection<Client>(STORAGE_KEYS.clients, SEED_CLIENTS);
-export const useProducts = () => useCollection<Product>(STORAGE_KEYS.products, SEED_PRODUCTS);
-export const useQuotes = () => useCollection<Quote>(STORAGE_KEYS.quotes, SEED_QUOTES);
-export const useProposals = () => useCollection<Proposal>(STORAGE_KEYS.proposals, SEED_PROPOSALS);
+export const useClients = () => useTable<Client>({ table: 'clients', toApp: mapClient, toRow: clientToRow });
+export const useProducts = () => useTable<Product>({ table: 'products', toApp: mapProduct, toRow: productToRow });
+export const useQuotes = () => useTable<Quote>({ table: 'quotes', toApp: mapQuote, toRow: quoteToRow });
+export const useProposals = () => useTable<Proposal>({ table: 'proposals', toApp: mapProposal, toRow: proposalToRow });
+export const useInvoices = () => useTable<Invoice>({ table: 'invoices', toApp: mapInvoice, toRow: invoiceToRow });
 
-// Sync accessors (for non-hook code)
-export const getQuotes = () => read<Quote[]>(STORAGE_KEYS.quotes, SEED_QUOTES);
-export const getProposals = () => read<Proposal[]>(STORAGE_KEYS.proposals, SEED_PROPOSALS);
-export const getClients = () => read<Client[]>(STORAGE_KEYS.clients, SEED_CLIENTS);
-export const getProducts = () => read<Product[]>(STORAGE_KEYS.products, SEED_PRODUCTS);
+// Sync accessors kept for back-compat (return empty; server-backed now)
+export const getQuotes = (): Quote[] => [];
+export const getProposals = (): Proposal[] => [];
+export const getClients = (): Client[] => [];
+export const getProducts = (): Product[] => [];

@@ -39,11 +39,11 @@ const ClientsPage: React.FC = () => {
     const openCreate = () => { setForm(emptyClient); setEditingId(null); setShowForm(true); };
     const openEdit = (c: Client) => { setForm({ ...c }); setEditingId(c.id); setShowForm(true); };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name || !form.email) { toast.error('Name and email required'); return; }
-        if (editingId) { update(editingId, form); toast.success('Client updated'); }
-        else { const c = create({ ...form, createdAt: new Date().toISOString() }); setSelectedId(c.id); toast.success('Client added'); }
+        if (editingId) { await update(editingId, form); toast.success('Client updated'); }
+        else { const c = await create({ ...form, createdAt: new Date().toISOString() }); if (c) setSelectedId(c.id); toast.success('Client added'); }
         setShowForm(false);
     };
 
