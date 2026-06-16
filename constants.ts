@@ -135,7 +135,7 @@ export const INVOICES_DATA: Invoice[] = [
 
 export const USERS_DATA: User[] = [
   {
-    id: 'u1',
+    id: '1',
     name: 'Alex Johnson',
     email: 'alex.j@company.com',
     role: 'Admin',
@@ -144,7 +144,7 @@ export const USERS_DATA: User[] = [
     avatarUrl: 'https://i.pravatar.cc/150?u=u1',
   },
   {
-    id: 'u2',
+    id: '2',
     name: 'Sarah Connor',
     email: 'sarah.c@company.com',
     role: 'Editor',
@@ -153,7 +153,7 @@ export const USERS_DATA: User[] = [
     avatarUrl: 'https://i.pravatar.cc/150?u=u2',
   },
   {
-    id: 'u3',
+    id: '3',
     name: 'Mike Chen',
     email: 'mike.chen@company.com',
     role: 'Viewer',
@@ -162,7 +162,7 @@ export const USERS_DATA: User[] = [
     avatarUrl: undefined,
   },
   {
-    id: 'u4',
+    id: '4',
     name: 'Emily Davis',
     email: 'emily.d@company.com',
     role: 'Accountant',
@@ -171,7 +171,7 @@ export const USERS_DATA: User[] = [
     avatarUrl: 'https://i.pravatar.cc/150?u=u4',
   },
   {
-    id: 'u5',
+    id: '5',
     name: 'David Wilson',
     email: 'david.w@company.com',
     role: 'Editor',
