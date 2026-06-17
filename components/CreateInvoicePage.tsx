@@ -287,6 +287,30 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                         </select>
                     </div>
 
+                    {/* India GST controls */}
+                    {currency.code === 'INR' && taxRate > 0 && (
+                        <div className="space-y-3 p-3 rounded-lg bg-mint/5 border border-mint/20">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-mint">India GST</p>
+                            <div>
+                                <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">SAC code</label>
+                                <input
+                                    value={sacCode}
+                                    onChange={(e) => setSacCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="9983"
+                                    className="w-full text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1.5 font-mono"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">9983 = Other professional services (default for design)</p>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">Place of supply</label>
+                                <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
+                                    <button type="button" onClick={() => setSupplyType('intra')} className={`flex-1 px-2 py-1.5 text-xs font-medium rounded ${supplyType === 'intra' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'}`}>Intra-state · CGST+SGST</button>
+                                    <button type="button" onClick={() => setSupplyType('inter')} className={`flex-1 px-2 py-1.5 text-xs font-medium rounded ${supplyType === 'inter' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'}`}>Inter-state · IGST</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Payment Terms */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Terms</label>
