@@ -82,7 +82,9 @@ export const LawyersPage: React.FC = () => {
   const reload = useCallback(async () => {
     setLoading(true);
     const [lq, eq, cq] = await Promise.all([
-      db.from('lawyers').select('*').eq('active', true).order('full_name'),
+      // Marketplace tab — browse via the safe RPC. Contact details (email/phone)
+      // are not exposed here; org members get them once they engage a lawyer.
+      db.rpc('list_marketplace_lawyers'),
       orgId
         ? db.from('lawyer_engagements')
             .select('*, lawyers(*), legal_cases(id, title, case_number)')
@@ -92,7 +94,8 @@ export const LawyersPage: React.FC = () => {
         ? db.from('legal_cases').select('id, title, case_number').eq('org_id', orgId).order('created_at', { ascending: false })
         : Promise.resolve({ data: [] }),
     ]);
-    setLawyers(lq.data || []);
+    // The RPC omits email/phone; surface placeholders so existing UI fields render.
+    setLawyers((lq.data || []).map((l: any) => ({ ...l, email: l.email ?? '', phone: l.phone ?? null })));
     setEngagements(eq.data || []);
     setCases(cq.data || []);
     setLoading(false);

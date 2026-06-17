@@ -18,6 +18,7 @@ interface Body {
     clientName: string;
     items?: Array<{ description?: string; quantity?: number; rate?: number }>;
   };
+  lawyerId?: string;
   lawyer?: { full_name?: string; bar_council_no?: string; firm?: string; email?: string };
   org?: { name?: string; legal_name?: string; gstin?: string; state?: string; address_line1?: string; city?: string };
   daysOverdue?: number;
@@ -32,7 +33,24 @@ Deno.serve(async (req) => {
     if (!key) return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = (await req.json()) as Body;
-    const { invoice, lawyer, org, daysOverdue } = body;
+    const { invoice, org, daysOverdue } = body;
+
+    // Resolve lawyer server-side using service role when an id is provided.
+    // The client no longer has access to email/phone via RLS, so we look them up here.
+    let lawyer = body.lawyer;
+    if (body.lawyerId) {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+      const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (SUPABASE_URL && SERVICE_KEY) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/lawyers?id=eq.${body.lawyerId}&select=full_name,bar_council_no,email,phone`, {
+          headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+        });
+        if (r.ok) {
+          const rows = await r.json();
+          if (Array.isArray(rows) && rows[0]) lawyer = rows[0];
+        }
+      }
+    }
 
     const fmt = (n: number) => `Rs. ${Math.round(n).toLocaleString("en-IN")}`;
     const itemsText = (invoice.items || [])
