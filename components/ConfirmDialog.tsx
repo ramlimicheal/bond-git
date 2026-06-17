@@ -140,7 +140,6 @@ export function useConfirmDialog() {
     const cancel = React.useCallback(() => {
         dialogState.onCancel();
     }, [dialogState]);
-    }, []);
 
     const DialogComponent = (
         <ConfirmDialog
