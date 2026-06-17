@@ -3,6 +3,7 @@ import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useOrg } from '../org.context';
 import { supabase } from '../src/integrations/supabase/client';
+import DemoSeedButton from './DemoSeedButton';
 
 interface SettingsPageProps {
     onBack: () => void;
@@ -35,6 +36,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         if (error) { toast.error(`Could not save: ${error.message}`); return; }
         await refresh();
         toast.success('Legal notice settings saved');
+    };
+
+    const [scanning, setScanning] = useState(false);
+    const runScanNow = async () => {
+        if (!orgId) return;
+        setScanning(true);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/auto-notice-cron`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-notice-cron`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({ orgId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Scan error ${res.status}`);
+            toast.success(`Scan complete: ${data.drafted || 0} drafted from ${data.scanned || 0} overdue`);
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally { setScanning(false); }
     };
 
     // Company Settings State
