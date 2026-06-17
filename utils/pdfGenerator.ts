@@ -375,7 +375,8 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
 
 // ============ Helpers ============
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  const safe = sanitize(text);
+  const words = safe.split(/\s+/);
   const lines: string[] = [];
   let line = '';
   for (const w of words) {
