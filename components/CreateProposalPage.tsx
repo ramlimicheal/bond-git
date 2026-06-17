@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Icons } from './Icon';
 import { Proposal, ProposalSection } from '../types';
 import { toast } from './Toast';
+import { supabase } from '../src/integrations/supabase/client';
+import { useOrg } from '../org.context';
 
 interface CreateProposalPageProps {
     onBack: () => void;
@@ -34,6 +36,7 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
     // Force Rebuild Trigger
     const signatureRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
+    const { org } = useOrg();
 
     // Proposal Details
     const [proposalNumber, setProposalNumber] = useState(`PROP-${Date.now().toString().slice(-8)}`);
@@ -70,47 +73,40 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
         }
 
         setIsGeneratingAI(true);
-        toast.success('Generating AI-powered agreement...');
-
-        // Simulate AI generation
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const aiGeneratedSections: ProposalSection[] = [
-            {
-                id: '1',
-                title: 'Project Overview',
-                content: `This agreement is entered into for ${projectType} services. The project aims to deliver professional ${projectType.toLowerCase()} solutions as per the client's requirements and industry best practices.`
-            },
-            {
-                id: '2',
-                title: 'Scope of Work',
-                content: `The service provider agrees to:\n• Deliver complete ${projectType.toLowerCase()} services\n• Provide regular progress updates\n• Incorporate up to 3 rounds of revisions\n• Deliver final files in all required formats\n• Provide post-delivery support for 15 days`
-            },
-            {
-                id: '3',
-                title: 'Deliverables',
-                content: `Upon completion, the client will receive:\n• Final ${projectType.toLowerCase()} assets\n• Source files (where applicable)\n• Documentation and guidelines\n• Usage rights as specified in this agreement`
-            },
-            {
-                id: '4',
-                title: 'Timeline',
-                content: `Project Duration: 2-4 weeks from the date of signing\n\nMilestones:\n• Week 1: Initial concepts and research\n• Week 2: Development and iterations\n• Week 3: Final refinements\n• Week 4: Delivery and handover`
-            },
-            {
-                id: '5',
-                title: 'Investment',
-                content: `Total Project Value: ₹${parseInt(totalValue).toLocaleString()}\n\nPayment Terms:\n• 50% advance payment upon signing\n• 50% upon project completion\n\nPayment Mode: Bank Transfer / UPI`
-            },
-            {
-                id: '6',
-                title: 'Terms & Conditions',
-                content: `1. INTELLECTUAL PROPERTY: Upon full payment, all intellectual property rights shall transfer to the client.\n\n2. CONFIDENTIALITY: Both parties agree to maintain confidentiality of all project-related information.\n\n3. REVISIONS: Up to 3 rounds of revisions are included. Additional revisions will be billed separately.\n\n4. CANCELLATION: Either party may cancel with 7 days written notice. Completed work will be billed proportionally.\n\n5. LIABILITY: The service provider's liability is limited to the project value.\n\n6. DISPUTE RESOLUTION: Any disputes shall be resolved through arbitration as per Indian Arbitration Act.\n\n7. GOVERNING LAW: This agreement shall be governed by the laws of India.`
-            },
-        ];
-
-        setSections(aiGeneratedSections);
-        setIsGeneratingAI(false);
-        toast.success('Agreement generated! Review and customize as needed.');
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/ai-assist`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({
+                    mode: 'proposal-agreement',
+                    projectType,
+                    totalValue: Number(totalValue) || 0,
+                    clientName: clientName || clientCompany,
+                    brandVoice: org?.type === 'agency' ? 'agency' : 'freelancer',
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `AI error ${res.status}`);
+            const s = data.sections || {};
+            setSections([
+                { id: '1', title: 'Project Overview', content: s.overview || '' },
+                { id: '2', title: 'Scope of Work', content: s.scope || '' },
+                { id: '3', title: 'Deliverables', content: s.deliverables || '' },
+                { id: '4', title: 'Timeline', content: s.timeline || '' },
+                { id: '5', title: 'Investment', content: s.investment || '' },
+                { id: '6', title: 'Terms & Conditions', content: s.terms || '' },
+            ]);
+            toast.success('Agreement drafted — review and customize as needed');
+        } catch (e) {
+            toast.error((e as Error).message || 'Could not draft agreement');
+        } finally {
+            setIsGeneratingAI(false);
+        }
     };
 
     // Signature Canvas Handlers

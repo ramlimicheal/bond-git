@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './Icon';
 import { Invoice, InvoiceItem } from '../types';
 import { toast } from './Toast';
+import { useOrg } from '../org.context';
+import { supabase } from '../src/integrations/supabase/client';
+import { DEFAULT_SAC, DEFAULT_GST_RATE, computeGst, isIntraState } from '../utils/gst';
 
 interface CreateInvoicePageProps {
     onBack: () => void;
@@ -44,6 +47,7 @@ const PAYMENT_TERMS = [
 
 export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, onSubmit }) => {
     const invoiceRef = useRef<HTMLDivElement>(null);
+    const { org } = useOrg();
 
     // === SENDER (FROM) ===
     const [fromName, setFromName] = useState('');
@@ -73,10 +77,13 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
     const [poNumber, setPoNumber] = useState('');
 
     // === CURRENCY & TAX ===
-    const [currency, setCurrency] = useState(CURRENCIES[0]);
+    const [currency, setCurrency] = useState(CURRENCIES.find(c => c.code === 'INR') || CURRENCIES[0]);
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-    const [taxRate, setTaxRate] = useState(0);
+    const [taxRate, setTaxRate] = useState(DEFAULT_GST_RATE);
     const [taxLabel, setTaxLabel] = useState('Tax');
+    const [sacCode, setSacCode] = useState(DEFAULT_SAC);
+    const [supplyType, setSupplyType] = useState<'intra' | 'inter'>('intra');
+    const [polishingIdx, setPolishingIdx] = useState<number | null>(null);
 
     // === DISCOUNT ===
     const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -113,10 +120,45 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
             ? (subtotal * discountValue) / 100
             : discountValue;
         const afterDiscount = subtotal - discountAmount;
-        const taxAmount = (afterDiscount * taxRate) / 100;
+        const gst = computeGst(afterDiscount, taxRate, supplyType === 'intra');
+        const taxAmount = gst.total;
         const total = afterDiscount + taxAmount;
-        return { subtotal, discountAmount, afterDiscount, taxAmount, total };
-    }, [items, taxRate, discountType, discountValue]);
+        return { subtotal, discountAmount, afterDiscount, taxAmount, total, gst };
+    }, [items, taxRate, discountType, discountValue, supplyType]);
+
+    // Sync supply type from org state vs client state when both known
+    useEffect(() => {
+        if (currency.code !== 'INR') return;
+        if (org?.default_state_code && toCity) {
+            setSupplyType(isIntraState(org.default_state_code, toCity) ? 'intra' : 'inter');
+        }
+    }, [org?.default_state_code, toCity, currency.code]);
+
+    const polishLine = async (index: number) => {
+        const line = items[index];
+        if (!line?.description?.trim()) { toast.error('Type something first, then polish'); return; }
+        setPolishingIdx(index);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/ai-assist`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({ mode: 'invoice-line', description: line.description, projectType: 'design services' }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `AI error ${res.status}`);
+            handleItemChange(index, 'description', String(data.text || line.description).trim());
+            toast.success('Polished');
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally {
+            setPolishingIdx(null);
+        }
+    };
 
     const formatCurrency = (amount: number) => {
         return `${currency.symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -245,6 +287,30 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                         </select>
                     </div>
 
+                    {/* India GST controls */}
+                    {currency.code === 'INR' && taxRate > 0 && (
+                        <div className="space-y-3 p-3 rounded-lg bg-mint/5 border border-mint/20">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-mint">India GST</p>
+                            <div>
+                                <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">SAC code</label>
+                                <input
+                                    value={sacCode}
+                                    onChange={(e) => setSacCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="9983"
+                                    className="w-full text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1.5 font-mono"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">9983 = Other professional services (default for design)</p>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">Place of supply</label>
+                                <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
+                                    <button type="button" onClick={() => setSupplyType('intra')} className={`flex-1 px-2 py-1.5 text-xs font-medium rounded ${supplyType === 'intra' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'}`}>Intra-state · CGST+SGST</button>
+                                    <button type="button" onClick={() => setSupplyType('inter')} className={`flex-1 px-2 py-1.5 text-xs font-medium rounded ${supplyType === 'inter' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'}`}>Inter-state · IGST</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Payment Terms */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Terms</label>
@@ -329,10 +395,30 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                             </div>
                         )}
                         {taxRate > 0 && (
-                            <div className="flex justify-between text-gray-500">
-                                <span>Tax ({taxRate}%)</span>
-                                <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.taxAmount)}</span>
-                            </div>
+                            currency.code === 'INR' ? (
+                                supplyType === 'intra' ? (
+                                    <>
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>CGST ({taxRate / 2}%)</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.cgst)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>SGST ({taxRate / 2}%)</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.sgst)}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex justify-between text-gray-500">
+                                        <span>IGST ({taxRate}%)</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.igst)}</span>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="flex justify-between text-gray-500">
+                                    <span>Tax ({taxRate}%)</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.taxAmount)}</span>
+                                </div>
+                            )
                         )}
                         <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span className="font-semibold text-gray-900 dark:text-white">Total ({currency.code})</span>
@@ -526,12 +612,23 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                                     {items.map((item, index) => (
                                         <tr key={index} className="border-b border-gray-200 dark:border-gray-700 group">
                                             <td className="py-4">
-                                                <input
-                                                    value={item.description}
-                                                    onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                                                    placeholder="Service or product description"
-                                                    className="w-full text-sm text-gray-900 dark:text-white bg-transparent border-none focus:outline-none placeholder-gray-400"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        value={item.description}
+                                                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                                        placeholder="Service or product description"
+                                                        className="flex-1 text-sm text-gray-900 dark:text-white bg-transparent border-none focus:outline-none placeholder-gray-400"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        title="Polish with AI"
+                                                        onClick={() => polishLine(index)}
+                                                        disabled={polishingIdx === index || !item.description?.trim()}
+                                                        className="opacity-0 group-hover:opacity-100 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-mint/10 text-mint hover:bg-mint/20 disabled:opacity-50 transition"
+                                                    >
+                                                        {polishingIdx === index ? '…' : 'AI'}
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td className="py-4">
                                                 <input

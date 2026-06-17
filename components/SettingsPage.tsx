@@ -3,6 +3,7 @@ import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useOrg } from '../org.context';
 import { supabase } from '../src/integrations/supabase/client';
+import DemoSeedButton from './DemoSeedButton';
 
 interface SettingsPageProps {
     onBack: () => void;
@@ -35,6 +36,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         if (error) { toast.error(`Could not save: ${error.message}`); return; }
         await refresh();
         toast.success('Legal notice settings saved');
+    };
+
+    const [scanning, setScanning] = useState(false);
+    const runScanNow = async () => {
+        if (!orgId) return;
+        setScanning(true);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/auto-notice-cron`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-notice-cron`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({ orgId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Scan error ${res.status}`);
+            toast.success(`Scan complete: ${data.drafted || 0} drafted from ${data.scanned || 0} overdue`);
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally { setScanning(false); }
     };
 
     // Company Settings State
@@ -532,6 +556,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                                         {savingAuto ? 'Saving…' : 'Save legal notice settings'}
                                     </button>
                                 </div>
+                                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Run overdue scan now</p>
+                                        <p className="text-xs text-gray-500">Manually trigger the auto-notice scanner for this workspace.</p>
+                                    </div>
+                                    <button
+                                        onClick={runScanNow}
+                                        disabled={scanning || !autoNoticeEnabled}
+                                        className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+                                    >
+                                        {scanning ? 'Scanning…' : 'Run scan'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -542,6 +579,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                             <div className="mb-8">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Integrations</h2>
                                 <p className="text-sm text-gray-500 mt-1">Connect with payment gateways and other services</p>
+                            </div>
+
+                            <div className="mb-6">
+                                <DemoSeedButton />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
