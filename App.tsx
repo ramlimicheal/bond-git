@@ -23,6 +23,7 @@ import FinanceReportsPage from './components/FinanceReportsPage';
 import LegalCasesPage from './components/LegalCasesPage';
 import LawyersPage from './components/LawyersPage';
 import OnboardingPage from './components/OnboardingPage';
+import LandingPage from './components/LandingPage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { useAuth } from './auth.context';
 import { OrgProvider, useOrg } from './org.context';
@@ -146,7 +147,7 @@ function AppContent() {
     // Derive current page from path for Sidebar highlighting
     const getCurrentPage = (): Page => {
         const path = location.pathname;
-        if (path === '/dashboard' || path === '/') return Page.DASHBOARD;
+        if (path === '/dashboard') return Page.DASHBOARD;
         if (path === '/sales') return Page.SALES_OVERVIEW;
         if (path === '/invoices') return Page.INVOICES;
         if (path.startsWith('/invoices/new')) return Page.CREATE_INVOICE;
@@ -225,7 +226,6 @@ function AppContent() {
 
                 <main className="flex-1 overflow-y-auto p-8">
                     <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/sales" element={<SalesOverviewPage />} />
                         <Route path="/reports" element={<FinanceReportsPage />} />
