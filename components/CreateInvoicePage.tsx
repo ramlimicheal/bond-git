@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './Icon';
 import { Invoice, InvoiceItem } from '../types';
 import { toast } from './Toast';
+import { useOrg } from '../org.context';
+import { supabase } from '../src/integrations/supabase/client';
+import { DEFAULT_SAC, DEFAULT_GST_RATE, computeGst, isIntraState } from '../utils/gst';
 
 interface CreateInvoicePageProps {
     onBack: () => void;
@@ -44,6 +47,7 @@ const PAYMENT_TERMS = [
 
 export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, onSubmit }) => {
     const invoiceRef = useRef<HTMLDivElement>(null);
+    const { org } = useOrg();
 
     // === SENDER (FROM) ===
     const [fromName, setFromName] = useState('');
@@ -73,10 +77,13 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
     const [poNumber, setPoNumber] = useState('');
 
     // === CURRENCY & TAX ===
-    const [currency, setCurrency] = useState(CURRENCIES[0]);
+    const [currency, setCurrency] = useState(CURRENCIES.find(c => c.code === 'INR') || CURRENCIES[0]);
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-    const [taxRate, setTaxRate] = useState(0);
+    const [taxRate, setTaxRate] = useState(DEFAULT_GST_RATE);
     const [taxLabel, setTaxLabel] = useState('Tax');
+    const [sacCode, setSacCode] = useState(DEFAULT_SAC);
+    const [supplyType, setSupplyType] = useState<'intra' | 'inter'>('intra');
+    const [polishingIdx, setPolishingIdx] = useState<number | null>(null);
 
     // === DISCOUNT ===
     const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -113,10 +120,45 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
             ? (subtotal * discountValue) / 100
             : discountValue;
         const afterDiscount = subtotal - discountAmount;
-        const taxAmount = (afterDiscount * taxRate) / 100;
+        const gst = computeGst(afterDiscount, taxRate, supplyType === 'intra');
+        const taxAmount = gst.total;
         const total = afterDiscount + taxAmount;
-        return { subtotal, discountAmount, afterDiscount, taxAmount, total };
-    }, [items, taxRate, discountType, discountValue]);
+        return { subtotal, discountAmount, afterDiscount, taxAmount, total, gst };
+    }, [items, taxRate, discountType, discountValue, supplyType]);
+
+    // Sync supply type from org state vs client state when both known
+    useEffect(() => {
+        if (currency.code !== 'INR') return;
+        if (org?.default_state_code && toCity) {
+            setSupplyType(isIntraState(org.default_state_code, toCity) ? 'intra' : 'inter');
+        }
+    }, [org?.default_state_code, toCity, currency.code]);
+
+    const polishLine = async (index: number) => {
+        const line = items[index];
+        if (!line?.description?.trim()) { toast.error('Type something first, then polish'); return; }
+        setPolishingIdx(index);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/ai-assist`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({ mode: 'invoice-line', description: line.description, projectType: 'design services' }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `AI error ${res.status}`);
+            handleItemChange(index, 'description', String(data.text || line.description).trim());
+            toast.success('Polished');
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally {
+            setPolishingIdx(null);
+        }
+    };
 
     const formatCurrency = (amount: number) => {
         return `${currency.symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
