@@ -1,3 +1,4 @@
+// @ts-nocheck — Deno edge function; runs in Supabase Edge runtime, not the app's TS project.
 // Drafts an Indian-law-aware demand notice / legal cover letter for an overdue invoice.
 // Uses Lovable AI Gateway (no user key needed).
 

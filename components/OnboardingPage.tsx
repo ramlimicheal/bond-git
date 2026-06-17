@@ -70,7 +70,7 @@ export const OnboardingPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-gray-900 dark:text-white">{opt.title}</span>
-                    {active && <Icons.Check size={18} className="text-gray-900 dark:text-white" />}
+                    {active && <Icons.CheckCircle size={18} className="text-gray-900 dark:text-white" />}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-snug">{opt.sub}</p>
                 </button>
