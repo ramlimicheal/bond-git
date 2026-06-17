@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './Icon';
 import { Quote, QuoteItem } from '../types';
 import { toast } from './Toast';
+import { supabase } from '../src/integrations/supabase/client';
 
 interface CreateQuotePageProps {
     onBack: () => void;
@@ -260,6 +261,13 @@ export const CreateQuotePage: React.FC<CreateQuotePageProps> = ({ onBack, onSubm
                             className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
                         />
                     </div>
+
+                    {/* AI Scope Generator */}
+                    <AiScopeGenerator
+                        projectName={projectName}
+                        validityDays={Number((validityPeriod || '30').replace(/\D/g, '')) || 30}
+                        onResult={(text) => setNotes(prev => prev ? `${prev}\n\n${text}` : text)}
+                    />
 
                 </div>
 
