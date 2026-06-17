@@ -5,7 +5,7 @@ import { Invoice } from '../types';
 import { toast } from './Toast';
 import { Icons } from './Icon';
 
-interface Lawyer { id: string; full_name: string; bar_council_no: string; email: string; phone?: string | null; rate_per_hour?: number | null; }
+interface Lawyer { id: string; full_name: string; bar_council_no: string; rate_per_hour?: number | null; }
 interface LegalNotice {
   id: string;
   status: 'draft' | 'sent' | 'acknowledged' | 'closed';
@@ -34,11 +34,12 @@ export const LegalNoticesPanel: React.FC<{ invoice: Invoice }> = ({ invoice }) =
   const load = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    // Marketplace browsing goes through the safe RPC — contact details stay server-side.
     const [{ data: lw }, { data: ns }] = await Promise.all([
-      db.from('lawyers').select('id, full_name, bar_council_no, email, phone, rate_per_hour').eq('active', true).order('created_at', { ascending: true }),
+      db.rpc('list_marketplace_lawyers'),
       db.from('legal_notices').select('*').eq('invoice_id', invoice.id).order('created_at', { ascending: false }),
     ]);
-    const lawyerList: Lawyer[] = lw ?? [];
+    const lawyerList: Lawyer[] = (lw ?? []) as Lawyer[];
     setLawyers(lawyerList);
     setNotices((ns ?? []) as LegalNotice[]);
     if (lawyerList.length && !selectedLawyer) setSelectedLawyer(lawyerList[0].id);
@@ -59,7 +60,6 @@ export const LegalNoticesPanel: React.FC<{ invoice: Invoice }> = ({ invoice }) =
     if (!orgId) return;
     if (lawyers.length === 0) { toast.error('Add a lawyer in Legal → Lawyers first'); return; }
     const lawyerId = selectedLawyer || lawyers[0].id;
-    const lawyer = lawyers.find(l => l.id === lawyerId);
     setDrafting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -79,7 +79,7 @@ export const LegalNoticesPanel: React.FC<{ invoice: Invoice }> = ({ invoice }) =
             clientName: invoice.clientName,
             items: invoice.items,
           },
-          lawyer: lawyer ? { full_name: lawyer.full_name, bar_council_no: lawyer.bar_council_no, email: lawyer.email } : undefined,
+          lawyerId,
           org: org ? { name: org.name, legal_name: (org as any).legal_name, gstin: org.gstin, state: (org as any).state, address_line1: (org as any).address_line1, city: (org as any).city } : undefined,
           daysOverdue: computeDaysOverdue(),
         }),
