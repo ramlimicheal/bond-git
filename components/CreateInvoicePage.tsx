@@ -395,10 +395,30 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                             </div>
                         )}
                         {taxRate > 0 && (
-                            <div className="flex justify-between text-gray-500">
-                                <span>Tax ({taxRate}%)</span>
-                                <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.taxAmount)}</span>
-                            </div>
+                            currency.code === 'INR' ? (
+                                supplyType === 'intra' ? (
+                                    <>
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>CGST ({taxRate / 2}%)</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.cgst)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>SGST ({taxRate / 2}%)</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.sgst)}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex justify-between text-gray-500">
+                                        <span>IGST ({taxRate}%)</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.gst.igst)}</span>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="flex justify-between text-gray-500">
+                                    <span>Tax ({taxRate}%)</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(calculations.taxAmount)}</span>
+                                </div>
+                            )
                         )}
                         <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                             <span className="font-semibold text-gray-900 dark:text-white">Total ({currency.code})</span>
