@@ -612,12 +612,23 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
                                     {items.map((item, index) => (
                                         <tr key={index} className="border-b border-gray-200 dark:border-gray-700 group">
                                             <td className="py-4">
-                                                <input
-                                                    value={item.description}
-                                                    onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                                                    placeholder="Service or product description"
-                                                    className="w-full text-sm text-gray-900 dark:text-white bg-transparent border-none focus:outline-none placeholder-gray-400"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        value={item.description}
+                                                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                                        placeholder="Service or product description"
+                                                        className="flex-1 text-sm text-gray-900 dark:text-white bg-transparent border-none focus:outline-none placeholder-gray-400"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        title="Polish with AI"
+                                                        onClick={() => polishLine(index)}
+                                                        disabled={polishingIdx === index || !item.description?.trim()}
+                                                        className="opacity-0 group-hover:opacity-100 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-mint/10 text-mint hover:bg-mint/20 disabled:opacity-50 transition"
+                                                    >
+                                                        {polishingIdx === index ? '…' : 'AI'}
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td className="py-4">
                                                 <input
