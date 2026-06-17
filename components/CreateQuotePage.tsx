@@ -4,6 +4,55 @@ import { Quote, QuoteItem } from '../types';
 import { toast } from './Toast';
 import { supabase } from '../src/integrations/supabase/client';
 
+const AiScopeGenerator: React.FC<{
+    projectName: string;
+    validityDays: number;
+    onResult: (text: string) => void;
+}> = ({ projectName, validityDays, onResult }) => {
+    const [brief, setBrief] = useState('');
+    const [busy, setBusy] = useState(false);
+    const generate = async () => {
+        if (!brief.trim()) { toast.error('Type a short brief first'); return; }
+        setBusy(true);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/ai-assist`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({ mode: 'quote-scope', brief, projectName, validityDays }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `AI error ${res.status}`);
+            onResult(String(data.text || '').trim());
+            toast.success('Scope drafted — pasted into Notes');
+            setBrief('');
+        } catch (e) {
+            toast.error((e as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    };
+    return (
+        <div className="p-3 rounded-lg bg-mint/5 border border-mint/20 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-mint flex items-center gap-1">✨ AI scope</p>
+            <textarea
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
+                rows={2}
+                placeholder="One-line brief — e.g. 'Logo + identity for a Goa-based hotel, 6 weeks'"
+                className="w-full text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1.5 resize-none"
+            />
+            <button type="button" onClick={generate} disabled={busy} className="w-full text-xs font-medium px-2 py-1.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 dark:bg-white dark:text-gray-900 disabled:opacity-50">
+                {busy ? 'Drafting…' : 'Generate scope'}
+            </button>
+        </div>
+    );
+};
+
 interface CreateQuotePageProps {
     onBack: () => void;
     onSubmit: (quote: Omit<Quote, 'id'>) => void;
