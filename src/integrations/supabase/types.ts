@@ -1218,6 +1218,16 @@ export type Database = {
       }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _entity_id?: string
+          _entity_type?: string
+          _meta?: Json
+          _org_id: string
+        }
+        Returns: string
+      }
       org_role_of: {
         Args: { _org_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
