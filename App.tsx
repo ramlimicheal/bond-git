@@ -24,6 +24,7 @@ import LegalCasesPage from './components/LegalCasesPage';
 import LawyersPage from './components/LawyersPage';
 import OnboardingPage from './components/OnboardingPage';
 import LandingPage from './components/LandingPage';
+import LawyerPortalPage from './components/LawyerPortalPage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { useAuth } from './auth.context';
 import { OrgProvider, useOrg } from './org.context';
@@ -231,6 +232,7 @@ function AppContent() {
                         <Route path="/reports" element={<FinanceReportsPage />} />
                         <Route path="/legal/cases" element={<LegalCasesPage />} />
                         <Route path="/legal/lawyers" element={<LawyersPage />} />
+                        <Route path="/lawyer" element={<LawyerPortalPage />} />
                         <Route path="/accounts" element={<AccountsPage searchQuery={searchQuery} />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/clients" element={<ClientsPage />} />
