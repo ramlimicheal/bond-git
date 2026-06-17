@@ -328,6 +328,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoices_attached_lawyer_id_fkey"
+            columns: ["attached_lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_lawyers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -390,6 +397,13 @@ export type Database = {
             columns: ["lawyer_id"]
             isOneToOne: false
             referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lawyer_engagements_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_lawyers"
             referencedColumns: ["id"]
           },
           {
@@ -680,6 +694,13 @@ export type Database = {
             columns: ["lawyer_id"]
             isOneToOne: false
             referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_notices_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_lawyers"
             referencedColumns: ["id"]
           },
           {
@@ -1318,7 +1339,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_lawyers: {
+        Row: {
+          active: boolean | null
+          bar_council_no: string | null
+          bio: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          rate_per_hour: number | null
+          specialties: string[] | null
+          states: string[] | null
+          verified: boolean | null
+        }
+        Insert: {
+          active?: boolean | null
+          bar_council_no?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          rate_per_hour?: number | null
+          specialties?: string[] | null
+          states?: string[] | null
+          verified?: boolean | null
+        }
+        Update: {
+          active?: boolean | null
+          bar_council_no?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          rate_per_hour?: number | null
+          specialties?: string[] | null
+          states?: string[] | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_write_org: { Args: { _org_id: string }; Returns: boolean }
@@ -1331,6 +1390,21 @@ export type Database = {
       }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      list_marketplace_lawyers: {
+        Args: never
+        Returns: {
+          active: boolean
+          bar_council_no: string
+          bio: string
+          created_at: string
+          full_name: string
+          id: string
+          rate_per_hour: number
+          specialties: string[]
+          states: string[]
+          verified: boolean
+        }[]
+      }
       log_audit_event: {
         Args: {
           _action: string
