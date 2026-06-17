@@ -231,6 +231,7 @@ export type Database = {
       invoices: {
         Row: {
           amount_paid: number
+          attached_lawyer_id: string | null
           client_id: string | null
           client_name: string | null
           client_type: string | null
@@ -240,6 +241,7 @@ export type Database = {
           discount_amount: number
           due_date: string | null
           id: string
+          is_interstate: boolean
           issue_date: string
           items: Json
           notes: string | null
@@ -247,6 +249,7 @@ export type Database = {
           org_id: string
           paid_at: string | null
           pdf_url: string | null
+          place_of_supply_state: string | null
           sent_at: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
@@ -258,6 +261,7 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          attached_lawyer_id?: string | null
           client_id?: string | null
           client_name?: string | null
           client_type?: string | null
@@ -267,6 +271,7 @@ export type Database = {
           discount_amount?: number
           due_date?: string | null
           id?: string
+          is_interstate?: boolean
           issue_date?: string
           items?: Json
           notes?: string | null
@@ -274,6 +279,7 @@ export type Database = {
           org_id: string
           paid_at?: string | null
           pdf_url?: string | null
+          place_of_supply_state?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
@@ -285,6 +291,7 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          attached_lawyer_id?: string | null
           client_id?: string | null
           client_name?: string | null
           client_type?: string | null
@@ -294,6 +301,7 @@ export type Database = {
           discount_amount?: number
           due_date?: string | null
           id?: string
+          is_interstate?: boolean
           issue_date?: string
           items?: Json
           notes?: string | null
@@ -301,6 +309,7 @@ export type Database = {
           org_id?: string
           paid_at?: string | null
           pdf_url?: string | null
+          place_of_supply_state?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
@@ -311,6 +320,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_attached_lawyer_id_fkey"
+            columns: ["attached_lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_client_id_fkey"
             columns: ["client_id"]
@@ -605,6 +621,76 @@ export type Database = {
           },
         ]
       }
+      legal_notices: {
+        Row: {
+          acknowledged_at: string | null
+          ai_draft: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string
+          lawyer_id: string | null
+          notes: string | null
+          org_id: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["legal_notice_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          ai_draft?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id: string
+          lawyer_id?: string | null
+          notes?: string | null
+          org_id: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["legal_notice_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          ai_draft?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string
+          lawyer_id?: string | null
+          notes?: string | null
+          org_id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["legal_notice_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_notices_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_notices_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_notices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -650,6 +736,8 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          auto_notice_days: number
+          auto_notice_enabled: boolean
           bank_account_number: string | null
           bank_ifsc: string | null
           bank_name: string | null
@@ -658,6 +746,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_notes: string | null
+          default_sac: string
+          default_state_code: string | null
+          default_tax_rate: number
           default_terms: string | null
           email: string | null
           gstin: string | null
@@ -666,15 +757,19 @@ export type Database = {
           legal_name: string | null
           logo_url: string | null
           name: string
+          notifications: Json
+          onboarded: boolean
           pan: string | null
           phone: string | null
           pincode: string | null
           plan: string
           proposal_prefix: string | null
           quote_prefix: string | null
+          seat_limit: number
           signature_url: string | null
           state: string | null
           trial_ends_at: string
+          type: Database["public"]["Enums"]["org_type"]
           updated_at: string
           upi_vpa: string | null
           website: string | null
@@ -682,6 +777,8 @@ export type Database = {
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          auto_notice_days?: number
+          auto_notice_enabled?: boolean
           bank_account_number?: string | null
           bank_ifsc?: string | null
           bank_name?: string | null
@@ -690,6 +787,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_notes?: string | null
+          default_sac?: string
+          default_state_code?: string | null
+          default_tax_rate?: number
           default_terms?: string | null
           email?: string | null
           gstin?: string | null
@@ -698,15 +798,19 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name: string
+          notifications?: Json
+          onboarded?: boolean
           pan?: string | null
           phone?: string | null
           pincode?: string | null
           plan?: string
           proposal_prefix?: string | null
           quote_prefix?: string | null
+          seat_limit?: number
           signature_url?: string | null
           state?: string | null
           trial_ends_at?: string
+          type?: Database["public"]["Enums"]["org_type"]
           updated_at?: string
           upi_vpa?: string | null
           website?: string | null
@@ -714,6 +818,8 @@ export type Database = {
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          auto_notice_days?: number
+          auto_notice_enabled?: boolean
           bank_account_number?: string | null
           bank_ifsc?: string | null
           bank_name?: string | null
@@ -722,6 +828,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_notes?: string | null
+          default_sac?: string
+          default_state_code?: string | null
+          default_tax_rate?: number
           default_terms?: string | null
           email?: string | null
           gstin?: string | null
@@ -730,15 +839,19 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name?: string
+          notifications?: Json
+          onboarded?: boolean
           pan?: string | null
           phone?: string | null
           pincode?: string | null
           plan?: string
           proposal_prefix?: string | null
           quote_prefix?: string | null
+          seat_limit?: number
           signature_url?: string | null
           state?: string | null
           trial_ends_at?: string
+          type?: Database["public"]["Enums"]["org_type"]
           updated_at?: string
           upi_vpa?: string | null
           website?: string | null
@@ -1264,7 +1377,9 @@ export type Database = {
         | "msme_samadhaan"
         | "client_reply"
         | "other"
+      legal_notice_status: "draft" | "sent" | "acknowledged" | "closed"
       org_role: "owner" | "admin" | "accountant" | "viewer"
+      org_type: "freelancer" | "agency"
       proposal_status: "draft" | "sent" | "viewed" | "signed" | "declined"
       quote_status: "draft" | "sent" | "accepted" | "declined" | "expired"
     }
@@ -1428,7 +1543,9 @@ export const Constants = {
         "client_reply",
         "other",
       ],
+      legal_notice_status: ["draft", "sent", "acknowledged", "closed"],
       org_role: ["owner", "admin", "accountant", "viewer"],
+      org_type: ["freelancer", "agency"],
       proposal_status: ["draft", "sent", "viewed", "signed", "declined"],
       quote_status: ["draft", "sent", "accepted", "declined", "expired"],
     },

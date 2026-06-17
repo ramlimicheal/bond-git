@@ -22,12 +22,13 @@ import SalesOverviewPage from './components/SalesOverviewPage';
 import FinanceReportsPage from './components/FinanceReportsPage';
 import LegalCasesPage from './components/LegalCasesPage';
 import LawyersPage from './components/LawyersPage';
+import OnboardingPage from './components/OnboardingPage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { useAuth } from './auth.context';
-import { OrgProvider } from './org.context';
+import { OrgProvider, useOrg } from './org.context';
 import { fetchInvoices, deleteInvoice } from './api.client';
 import { mapApiInvoiceToInvoice } from './mappers';
-import { useQuotes, useProposals } from './dataStore';
+import { useQuotes, useProposals, useInvoices } from './dataStore';
 import { toast } from './components/Toast';
 
 // Protected Route Component
@@ -126,8 +127,21 @@ function AppContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+    const { org, loading: orgLoading } = useOrg();
     const { create: createQuote } = useQuotes();
     const { create: createProposal } = useProposals();
+    const { create: createInvoice } = useInvoices();
+
+    // First-run onboarding redirect
+    useEffect(() => {
+        if (orgLoading) return;
+        if (!org) return;
+        if (org.onboarded === false && location.pathname !== '/onboarding') {
+            navigate('/onboarding', { replace: true });
+        }
+    }, [org, orgLoading, location.pathname, navigate]);
+
+    if (location.pathname === '/onboarding') return <OnboardingPage />;
 
     // Derive current page from path for Sidebar highlighting
     const getCurrentPage = (): Page => {
@@ -221,7 +235,11 @@ function AppContent() {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/clients" element={<ClientsPage />} />
                         <Route path="/invoices" element={<InvoicesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
-                        <Route path="/invoices/new" element={<CreateInvoicePage onBack={() => handleNavigate(Page.DASHBOARD)} onSubmit={(data) => console.log('Invoice data:', data)} />} />
+                        <Route path="/invoices/new" element={<CreateInvoicePage onBack={() => handleNavigate(Page.INVOICES)} onSubmit={async (data) => {
+                            const created = await createInvoice(data as any);
+                            if (created) { toast.success('Invoice saved'); navigate(`/invoices/${created.id}`); }
+                            else toast.error('Could not save invoice');
+                        }} />} />
                         <Route path="/invoices/:id" element={<InvoiceDetailsRoute />} />
                         <Route path="/quotes" element={<QuotesPage searchQuery={searchQuery} onNavigate={handleNavigate} />} />
                         <Route path="/quotes/new" element={<CreateQuotePage onBack={() => handleNavigate(Page.QUOTES)} onSubmit={(data: any) => { createQuote({ ...data, createdDate: new Date().toLocaleDateString('en-GB'), number: data?.number || `QT-${Date.now()}`, status: 'Draft' }); toast.success('Quote created'); handleNavigate(Page.QUOTES); }} />} />

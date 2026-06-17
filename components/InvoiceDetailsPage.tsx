@@ -5,6 +5,7 @@ import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
+import LegalNoticesPanel from './LegalNoticesPanel';
 
 interface InvoiceDetailsPageProps {
     invoice: Invoice;
@@ -383,6 +384,11 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
                             </p>
                         </div>
 
+                    </div>
+
+                    {/* Legal layer — AI-drafted demand notice */}
+                    <div className="mt-6">
+                        <LegalNoticesPanel invoice={invoice} />
                     </div>
 
                     {/* Footer */}

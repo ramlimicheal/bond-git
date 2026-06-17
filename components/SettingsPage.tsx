@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Icons } from './Icon';
 import { toast } from './Toast';
+import { useOrg } from '../org.context';
+import { supabase } from '../src/integrations/supabase/client';
 
 interface SettingsPageProps {
     onBack: () => void;
@@ -10,6 +12,30 @@ type SettingsTab = 'company' | 'banking' | 'invoice' | 'notifications' | 'integr
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState<SettingsTab>('company');
+    const { org, orgId, refresh } = useOrg();
+    const [autoNoticeEnabled, setAutoNoticeEnabled] = useState<boolean>(org?.auto_notice_enabled ?? false);
+    const [autoNoticeDays, setAutoNoticeDays] = useState<number>(org?.auto_notice_days ?? 30);
+    const [savingAuto, setSavingAuto] = useState(false);
+
+    React.useEffect(() => {
+        if (org) {
+            setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
+            setAutoNoticeDays(org.auto_notice_days ?? 30);
+        }
+    }, [org]);
+
+    const saveAutoNotice = async () => {
+        if (!orgId) return;
+        setSavingAuto(true);
+        const { error } = await (supabase as any)
+            .from('organizations')
+            .update({ auto_notice_enabled: autoNoticeEnabled, auto_notice_days: autoNoticeDays })
+            .eq('id', orgId);
+        setSavingAuto(false);
+        if (error) { toast.error(`Could not save: ${error.message}`); return; }
+        await refresh();
+        toast.success('Legal notice settings saved');
+    };
 
     // Company Settings State
     const [companyName, setCompanyName] = useState('');
@@ -467,6 +493,45 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                                         </button>
                                     </div>
                                 ))}
+                            </div>
+
+                            <div className="mt-6 p-6 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg space-y-4">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Auto legal notice</h3>
+                                    <p className="text-xs text-gray-500 mt-1">When an invoice is overdue by N days, Billenty will auto-draft a demand notice and attach your primary lawyer.</p>
+                                </div>
+                                <div className="flex items-center justify-between py-2">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Enable auto-draft</p>
+                                        <p className="text-xs text-gray-500">You still review and send the notice yourself.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setAutoNoticeEnabled(v => !v)}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${autoNoticeEnabled ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                                        aria-pressed={autoNoticeEnabled}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full shadow transition-transform ${autoNoticeEnabled ? 'left-7 bg-white dark:bg-gray-900' : 'left-1 bg-white'}`} />
+                                    </button>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Days overdue before auto-draft</label>
+                                    <input
+                                        type="number" min={1} max={120}
+                                        value={autoNoticeDays}
+                                        onChange={(e) => setAutoNoticeDays(Math.max(1, Math.min(120, Number(e.target.value) || 30)))}
+                                        disabled={!autoNoticeEnabled}
+                                        className="w-32 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={saveAutoNotice}
+                                        disabled={savingAuto}
+                                        className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-md hover:bg-gray-800 dark:bg-white dark:text-gray-900 disabled:opacity-50"
+                                    >
+                                        {savingAuto ? 'Saving…' : 'Save legal notice settings'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
