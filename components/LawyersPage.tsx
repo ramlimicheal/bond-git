@@ -57,7 +57,7 @@ const emptyLawyer = {
 export const LawyersPage: React.FC = () => {
   const { orgId } = useOrg();
   const { user } = useAuth();
-  const { confirm } = useConfirmDialog();
+  const { confirm, DialogComponent } = useConfirmDialog();
 
   const [tab, setTab] = useState<'engagements' | 'marketplace'>('engagements');
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
@@ -217,6 +217,7 @@ export const LawyersPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {DialogComponent}
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Lawyers</h1>

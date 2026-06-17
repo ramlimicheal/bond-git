@@ -102,12 +102,14 @@ export function useConfirmDialog() {
         message: string;
         variant: 'danger' | 'warning' | 'info';
         onConfirm: () => void;
+        onCancel: () => void;
     }>({
         isOpen: false,
         title: '',
         message: '',
         variant: 'danger',
         onConfirm: () => { },
+        onCancel: () => { },
     });
 
     const confirm = React.useCallback((options: {
@@ -127,13 +129,17 @@ export function useConfirmDialog() {
                     setDialogState(prev => ({ ...prev, isOpen: false }));
                     resolve(true);
                 },
+                onCancel: () => {
+                    setDialogState(prev => ({ ...prev, isOpen: false }));
+                    resolve(false);
+                },
             });
         });
     }, []);
 
     const cancel = React.useCallback(() => {
-        setDialogState(prev => ({ ...prev, isOpen: false }));
-    }, []);
+        dialogState.onCancel();
+    }, [dialogState]);
 
     const DialogComponent = (
         <ConfirmDialog

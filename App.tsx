@@ -23,7 +23,7 @@ import FinanceReportsPage from './components/FinanceReportsPage';
 import LegalCasesPage from './components/LegalCasesPage';
 import LawyersPage from './components/LawyersPage';
 import { Page, Invoice, Quote, Proposal } from './types';
-import { AuthProvider, useAuth } from './auth.context';
+import { useAuth } from './auth.context';
 import { OrgProvider } from './org.context';
 import { fetchInvoices, deleteInvoice } from './api.client';
 import { mapApiInvoiceToInvoice } from './mappers';
@@ -246,21 +246,19 @@ function AppContent() {
 
 function App() {
     return (
-        <AuthProvider>
-            <OrgProvider>
-                <Router>
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
-                        <Route path="/*" element={
-                            <RequireAuth>
-                                <AppContent />
-                            </RequireAuth>
-                        } />
-                    </Routes>
-                </Router>
-            </OrgProvider>
-        </AuthProvider>
+        <OrgProvider>
+            <Router>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/*" element={
+                        <RequireAuth>
+                            <AppContent />
+                        </RequireAuth>
+                    } />
+                </Routes>
+            </Router>
+        </OrgProvider>
     );
 }
 
