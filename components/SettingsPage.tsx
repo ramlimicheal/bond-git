@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Icons } from './Icon';
 import { toast } from './Toast';
+import { useOrg } from '../org.context';
+import { supabase } from '../src/integrations/supabase/client';
 
 interface SettingsPageProps {
     onBack: () => void;
@@ -10,6 +12,30 @@ type SettingsTab = 'company' | 'banking' | 'invoice' | 'notifications' | 'integr
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState<SettingsTab>('company');
+    const { org, orgId, refresh } = useOrg();
+    const [autoNoticeEnabled, setAutoNoticeEnabled] = useState<boolean>(org?.auto_notice_enabled ?? false);
+    const [autoNoticeDays, setAutoNoticeDays] = useState<number>(org?.auto_notice_days ?? 30);
+    const [savingAuto, setSavingAuto] = useState(false);
+
+    React.useEffect(() => {
+        if (org) {
+            setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
+            setAutoNoticeDays(org.auto_notice_days ?? 30);
+        }
+    }, [org]);
+
+    const saveAutoNotice = async () => {
+        if (!orgId) return;
+        setSavingAuto(true);
+        const { error } = await (supabase as any)
+            .from('organizations')
+            .update({ auto_notice_enabled: autoNoticeEnabled, auto_notice_days: autoNoticeDays })
+            .eq('id', orgId);
+        setSavingAuto(false);
+        if (error) { toast.error(`Could not save: ${error.message}`); return; }
+        await refresh();
+        toast.success('Legal notice settings saved');
+    };
 
     // Company Settings State
     const [companyName, setCompanyName] = useState('');
