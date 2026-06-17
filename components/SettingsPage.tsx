@@ -556,6 +556,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                                         {savingAuto ? 'Saving…' : 'Save legal notice settings'}
                                     </button>
                                 </div>
+                                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Run overdue scan now</p>
+                                        <p className="text-xs text-gray-500">Manually trigger the auto-notice scanner for this workspace.</p>
+                                    </div>
+                                    <button
+                                        onClick={runScanNow}
+                                        disabled={scanning || !autoNoticeEnabled}
+                                        className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+                                    >
+                                        {scanning ? 'Scanning…' : 'Run scan'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -566,6 +579,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                             <div className="mb-8">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Integrations</h2>
                                 <p className="text-sm text-gray-500 mt-1">Connect with payment gateways and other services</p>
+                            </div>
+
+                            <div className="mb-6">
+                                <DemoSeedButton />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
