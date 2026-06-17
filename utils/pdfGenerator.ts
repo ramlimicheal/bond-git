@@ -16,6 +16,31 @@ const MARGIN = 48;
 const PAGE_W = 595.28; // A4
 const PAGE_H = 841.89;
 
+// pdf-lib's StandardFonts use WinAnsi encoding, which cannot encode characters
+// like ₹ (U+20B9), curly quotes, em-dashes, etc. Embedding a Unicode TTF would
+// bloat the bundle; instead we normalise text to WinAnsi-safe equivalents at
+// draw time. This fixes "WinAnsi cannot encode" crashes during PDF generation.
+function sanitize(input: unknown): string {
+  if (input === null || input === undefined) return '';
+  let s = String(input);
+  s = s
+    .replace(/\u20B9/g, 'Rs. ')           // ₹ Indian Rupee Sign
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'") // curly singles
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"') // curly doubles
+    .replace(/[\u2013\u2014\u2015]/g, '-') // en/em dashes
+    .replace(/\u2026/g, '...')              // ellipsis
+    .replace(/\u00A0/g, ' ')                // nbsp
+    .replace(/[\u2022\u25E6]/g, '*')        // bullets
+    .replace(/[\u00B7]/g, '-')              // middle dot
+    .replace(/\u20AC/g, 'EUR ')             // €
+    .replace(/\u00A3/g, 'GBP ')             // £
+    .replace(/\u00A5/g, 'JPY ');            // ¥
+  // Drop any remaining non-WinAnsi chars to avoid hard crashes.
+  // WinAnsi roughly covers 0x20-0x7E and 0xA0-0xFF.
+  s = s.replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, '?');
+  return s;
+}
+
 interface OrgBranding {
   name?: string;
   legal_name?: string | null;
@@ -35,7 +60,7 @@ async function loadFonts(pdf: PDFDocument) {
 function drawText(page: PDFPage, text: string, x: number, y: number, opts: { font: PDFFont; size?: number; color?: ReturnType<typeof rgb>; maxWidth?: number } = {} as any) {
   const size = opts.size ?? 10;
   const color = opts.color ?? COLORS.text;
-  page.drawText(text ?? '', { x, y, size, font: opts.font, color });
+  page.drawText(sanitize(text), { x, y, size, font: opts.font, color });
 }
 
 function drawLine(page: PDFPage, x1: number, y1: number, x2: number, y2: number, color = COLORS.line) {
@@ -350,7 +375,8 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
 
 // ============ Helpers ============
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  const safe = sanitize(text);
+  const words = safe.split(/\s+/);
   const lines: string[] = [];
   let line = '';
   for (const w of words) {
