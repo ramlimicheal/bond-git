@@ -19,6 +19,18 @@ export interface Organization {
   plan: string;
   trial_ends_at: string;
   created_at: string;
+  type?: 'freelancer' | 'agency';
+  seat_limit?: number;
+  state?: string | null;
+  address_line1?: string | null;
+  city?: string | null;
+  default_state_code?: string | null;
+  default_sac?: string | null;
+  default_tax_rate?: number | null;
+  auto_notice_enabled?: boolean;
+  auto_notice_days?: number;
+  notifications?: { email?: Record<string, boolean>; whatsapp?: Record<string, boolean> } | null;
+  onboarded?: boolean;
 }
 
 interface OrgContextValue {
