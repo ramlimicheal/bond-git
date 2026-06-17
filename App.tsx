@@ -46,6 +46,14 @@ function RequireAuth({ children }: { children: JSX.Element }) {
     return children;
 }
 
+// Redirect signed-in users away from public pages (landing/login/signup).
+function RedirectIfAuthed({ children }: { children: JSX.Element }) {
+    const { isAuthenticated, loading } = useAuth();
+    if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading…</div>;
+    if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    return children;
+}
+
 // ====== ROUTE WRAPPERS — look up entity by :id ======
 function InvoiceDetailsRoute() {
     const { id } = useParams<{ id: string }>();
@@ -269,9 +277,9 @@ function App() {
         <OrgProvider>
             <Router>
                 <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/" element={<RedirectIfAuthed><LandingPage /></RedirectIfAuthed>} />
+                    <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
+                    <Route path="/signup" element={<RedirectIfAuthed><Signup /></RedirectIfAuthed>} />
                     <Route path="/*" element={
                         <RequireAuth>
                             <AppContent />
