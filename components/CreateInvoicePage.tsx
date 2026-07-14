@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Icons } from './Icon';
 import { Invoice, InvoiceItem } from '../types';
 import { toast } from './Toast';
@@ -48,6 +49,7 @@ const PAYMENT_TERMS = [
 export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, onSubmit }) => {
     const invoiceRef = useRef<HTMLDivElement>(null);
     const { org } = useOrg();
+    const location = useLocation();
 
     // === SENDER (FROM) ===
     const [fromName, setFromName] = useState('');
@@ -102,6 +104,24 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
     const [routingNumber, setRoutingNumber] = useState('');
     const [swiftCode, setSwiftCode] = useState('');
     const [showBankDetails, setShowBankDetails] = useState(false);
+
+    // Prefill from navigation state (e.g. quote → invoice conversion). Runs once.
+    useEffect(() => {
+        const prefill: any = (location.state as any)?.prefill;
+        if (!prefill) return;
+        if (prefill.clientName) setToName(prefill.clientName);
+        if (prefill.clientEmail) setToEmail(prefill.clientEmail);
+        if (prefill.clientCompany) setToCompany(prefill.clientCompany);
+        if (Array.isArray(prefill.items) && prefill.items.length) {
+            setItems(prefill.items.map((it: any) => ({
+                description: it.description || '',
+                quantity: Number(it.quantity) || 1,
+                rate: Number(it.price ?? it.rate) || 0,
+            })));
+        }
+        if (prefill.notes) setNotes(prefill.notes);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Auto-calculate due date
     useEffect(() => {
