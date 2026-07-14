@@ -18,6 +18,19 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        chunkSizeWarningLimit: 600,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              'supabase': ['@supabase/supabase-js', '@lovable.dev/cloud-auth-js'],
+              'pdf': ['html2canvas', 'jspdf', 'pdf-lib', 'qrcode'],
+              'icons': ['lucide-react'],
+            },
+          },
+        },
+      },
     };
 });

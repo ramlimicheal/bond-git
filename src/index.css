@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base background + text per theme */
+html.light, html.light body { background-color: #f3f4f6; color: #0f172a; }
+html.dark, html.dark body { background-color: #0a0a0b; color: #f1f5f9; }
+
+/* Minimalist Dot Grid Pattern */
+.bg-grid-pattern {
+  background-color: #000000;
+  background-image: radial-gradient(#333333 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Input underline animation */
+.input-underline {
+  position: relative;
+}
+.input-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: #6EE7B7;
+  transition: width 0.3s ease;
+}
+.input-underline:focus-within::after {
+  width: 100%;
+}
+
+/* Dark-mode contrast: lift muted greys so secondary text passes WCAG AA */
+html.dark .text-gray-400 { color: #cbd5e1 !important; }
+html.dark .text-gray-500 { color: #cbd5e1 !important; }
+html.dark .text-gray-600 { color: #e2e8f0 !important; }
+html.dark .text-gray-700 { color: #f1f5f9 !important; }
+html.dark .text-gray-800 { color: #f8fafc !important; }
+html.dark .text-gray-900 { color: #ffffff !important; }
+html.dark .text-black { color: #ffffff !important; }
+html.dark .placeholder\:text-gray-400::placeholder,
+html.dark .placeholder\:text-gray-500::placeholder { color: #94a3b8 !important; }
+html.dark ::placeholder { color: #94a3b8; opacity: 1; }
+
+/* Surfaces in dark mode */
+html.dark .bg-white { background-color: #18181b !important; }
+html.dark .bg-gray-50 { background-color: #111114 !important; }
+html.dark .bg-gray-100 { background-color: #1c1c20 !important; }
+
+/* Borders in dark mode */
+html.dark .border-gray-100 { border-color: #27272a !important; }
+html.dark .border-gray-200 { border-color: #3f3f46 !important; }
+html.dark .border-gray-300 { border-color: #52525b !important; }
+
+/* Readable hover labels in dark sidebar/menus */
+html.dark .text-gray-300 { color: #f1f5f9 !important; }
+
+/* Inputs: ensure typed text is readable */
+html.dark input, html.dark textarea, html.dark select { color: #f8fafc; background-color: transparent; }
+html.dark input:-webkit-autofill { -webkit-text-fill-color: #f8fafc !important; }
+
+body {
+  font-family: 'Inter', sans-serif;
+}

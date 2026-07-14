@@ -37,6 +37,7 @@ function sanitize(input: unknown): string {
     .replace(/\u00A5/g, 'JPY ');            // ¥
   // Drop any remaining non-WinAnsi chars to avoid hard crashes.
   // WinAnsi roughly covers 0x20-0x7E and 0xA0-0xFF.
+  // eslint-disable-next-line no-control-regex
   s = s.replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, '?');
   return s;
 }

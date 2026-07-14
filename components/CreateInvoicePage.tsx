@@ -120,7 +120,6 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onBack, on
             })));
         }
         if (prefill.notes) setNotes(prefill.notes);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Auto-calculate due date

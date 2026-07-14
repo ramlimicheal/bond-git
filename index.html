@@ -4,117 +4,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BILLENTY Invoice Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Billenty - Invoice & Proposal Management for Indian Freelancers</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ["Space Grotesk", "sans-serif"],
-            body: ["Inter", "sans-serif"],
-          },
-          colors: {
-            mint: "#6EE7B7", // Vibrant mint green
-            primary: "#10B981", // Emerald primary to match mint vibe
-            "background-light": "#f3f4f6",
-            "background-dark": "#111111", // darker pure blackish for contrast
-            "card-dark": "#000000",
-            gray: {
-              750: '#2a2d33',
-              850: '#16181c',
-              900: '#111111',
-              950: '#000000',
-            },
-          },
-          borderRadius: {
-            'xl': '0.75rem',
-            '2xl': '1rem',
-            '3xl': '1.5rem',
-          },
-        },
-      },
-    };
-  </script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      /* Default base styles are handled by React classes now for better switching */
-    }
-
-    /* Base background + text per theme so nothing renders unreadable */
-    html.light, html.light body { background-color: #f3f4f6; color: #0f172a; }
-    html.dark, html.dark body { background-color: #0a0a0b; color: #f1f5f9; }
-
-    /* Minimalist Dot Grid Pattern */
-    .bg-grid-pattern {
-      background-color: #000000;
-      background-image: radial-gradient(#333333 1px, transparent 1px);
-      background-size: 24px 24px;
-    }
-
-    /* Input underline animation */
-    .input-underline {
-      position: relative;
-    }
-
-    .input-underline::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 1px;
-      background-color: #6EE7B7;
-      transition: width 0.3s ease;
-    }
-
-    .input-underline:focus-within::after {
-      width: 100%;
-    }
-
-    /* Dark-mode contrast: lift muted greys so secondary text passes WCAG AA on dark backgrounds */
-    html.dark .text-gray-400 { color: #cbd5e1 !important; } /* slate-300 */
-    html.dark .text-gray-500 { color: #cbd5e1 !important; } /* lifted from slate-400 → slate-300 */
-    html.dark .text-gray-600 { color: #e2e8f0 !important; } /* slate-200 */
-    html.dark .text-gray-700 { color: #f1f5f9 !important; } /* slate-100 */
-    html.dark .text-gray-800 { color: #f8fafc !important; }
-    html.dark .text-gray-900 { color: #ffffff !important; }
-    html.dark .text-black { color: #ffffff !important; }
-    html.dark .placeholder\:text-gray-400::placeholder,
-    html.dark .placeholder\:text-gray-500::placeholder { color: #94a3b8 !important; }
-    html.dark ::placeholder { color: #94a3b8; opacity: 1; }
-
-    /* Surfaces — make sure stray light backgrounds don't appear in dark mode */
-    html.dark .bg-white { background-color: #18181b !important; }
-    html.dark .bg-gray-50 { background-color: #111114 !important; }
-    html.dark .bg-gray-100 { background-color: #1c1c20 !important; }
-
-    /* Borders — visible against near-black surfaces */
-    html.dark .border-gray-100 { border-color: #27272a !important; }
-    html.dark .border-gray-200 { border-color: #3f3f46 !important; }
-    html.dark .border-gray-300 { border-color: #52525b !important; }
-
-    /* Readable hover labels in dark sidebar/menus */
-    html.dark .text-gray-300 { color: #f1f5f9 !important; }
-
-    /* Inputs: ensure typed text is readable */
-    html.dark input, html.dark textarea, html.dark select { color: #f8fafc; background-color: transparent; }
-    html.dark input:-webkit-autofill { -webkit-text-fill-color: #f8fafc !important; }
-  </style>
-  <meta property="og:title" content="BILLENTY Invoice Dashboard">
-  <meta name="twitter:title" content="BILLENTY Invoice Dashboard">
-  <meta name="description" content="Connect to GitHub to create and manage repositories for your projects.">
-  <meta property="og:description" content="Connect to GitHub to create and manage repositories for your projects.">
-  <meta name="twitter:description" content="Connect to GitHub to create and manage repositories for your projects.">
-  <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43f59dcd-9620-4579-8a99-8f500e0287a4/id-preview-7dfb24b8--eed2041b-5741-4256-8559-db197caba5d7.lovable.app-1781673130748.png">
-  <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43f59dcd-9620-4579-8a99-8f500e0287a4/id-preview-7dfb24b8--eed2041b-5741-4256-8559-db197caba5d7.lovable.app-1781673130748.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Billenty - Invoicing, quotes, and proposal management for Indian freelancers and small businesses. GST-compliant invoices, e-signatures, and UPI payments.">
+  <meta property="og:title" content="Billenty - Invoice & Proposal Management">
+  <meta property="og:description" content="GST-compliant invoicing, quotes, and legally binding proposals with e-signatures for Indian freelancers and small businesses.">
+  <meta name="twitter:title" content="Billenty - Invoice & Proposal Management">
+  <meta name="twitter:description" content="GST-compliant invoicing, quotes, and legally binding proposals with e-signatures for Indian freelancers and small businesses.">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:type" content="website">
 </head>

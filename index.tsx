@@ -5,6 +5,7 @@ import { AuthProvider } from './auth.context.tsx';
 import { ToastProvider, ToastStyles } from './components/Toast.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { ThemeProvider } from './theme.context';
+import './src/index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
