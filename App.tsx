@@ -93,7 +93,18 @@ function QuoteDetailsRoute() {
             onBack={() => navigate('/quotes')}
             onEdit={() => navigate('/quotes')}
             onDelete={(qid) => { remove(qid); toast.success('Quote deleted'); navigate('/quotes'); }}
-            onConvertToInvoice={() => { toast.success('Converting to invoice...'); navigate('/invoices/new'); }}
+            onConvertToInvoice={() => {
+                toast.success('Converting to invoice…');
+                navigate('/invoices/new', {
+                    state: {
+                        prefill: {
+                            clientName: quote.clientName,
+                            items: quote.items,
+                            notes: `Converted from quote ${quote.number}`,
+                        },
+                    },
+                });
+            }}
         />
     );
 }
