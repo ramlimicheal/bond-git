@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useClients } from '../dataStore';
-import { fetchInvoices } from '../api.client';
-import { mapApiInvoiceToInvoice } from '../mappers';
-import type { Client, Invoice } from '../types';
+import { useClients, useInvoices } from '../dataStore';
+import type { Client } from '../types';
 import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
@@ -13,17 +11,13 @@ const emptyClient: Omit<Client, 'id' | 'createdAt'> = {
 
 const ClientsPage: React.FC = () => {
     const { items, create, update, remove } = useClients();
+    const { items: invoices } = useInvoices();
     const { confirm } = useConfirmDialog();
     const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null);
     const [search, setSearch] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [form, setForm] = useState<Omit<Client, 'id' | 'createdAt'>>(emptyClient);
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-
-    React.useEffect(() => {
-        fetchInvoices().then((res) => setInvoices(res.map(mapApiInvoiceToInvoice))).catch(() => { });
-    }, []);
 
     const filtered = useMemo(() =>
         items.filter(c =>
