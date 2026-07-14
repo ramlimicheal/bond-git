@@ -21,7 +21,7 @@ interface AccountsPageProps {
 
 export const AccountsPage: React.FC<AccountsPageProps> = ({ searchQuery }) => {
   const { orgId } = useOrg();
-  const { confirm } = useConfirmDialog();
+  const { confirm, DialogComponent } = useConfirmDialog();
   const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -269,6 +269,7 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({ searchQuery }) => {
           </div>
         </div>
       </div>
+      {DialogComponent}
     </>
   );
 };

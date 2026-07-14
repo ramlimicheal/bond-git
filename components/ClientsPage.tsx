@@ -12,7 +12,7 @@ const emptyClient: Omit<Client, 'id' | 'createdAt'> = {
 const ClientsPage: React.FC = () => {
     const { items, create, update, remove } = useClients();
     const { items: invoices } = useInvoices();
-    const { confirm } = useConfirmDialog();
+    const { confirm, DialogComponent } = useConfirmDialog();
     const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null);
     const [search, setSearch] = useState('');
     const [showForm, setShowForm] = useState(false);
@@ -172,6 +172,7 @@ const ClientsPage: React.FC = () => {
                     </form>
                 </div>
             )}
+            {DialogComponent}
         </div>
     );
 };

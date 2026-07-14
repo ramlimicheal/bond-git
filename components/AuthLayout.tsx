@@ -24,7 +24,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
-                            <span className="text-xl font-bold font-display tracking-tight text-white">Billently</span>
+                            <span className="text-xl font-bold font-display tracking-tight text-white">Billenty</span>
                         </div>
                         <h1 className="text-3xl font-bold font-display leading-tight">
                             The new standard <br /> for modern invoicing.
@@ -33,7 +33,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => {
 
                     <div className="relative z-10 space-y-6">
                         <div className="p-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl">
-                            <p className="text-gray-300 italic text-sm mb-4">"Billently transformed how we handle payments. The interface is simply beautiful and the features are exactly what we needed."</p>
+                            <p className="text-gray-300 italic text-sm mb-4">"Billenty transformed how we handle payments. The interface is simply beautiful and the features are exactly what we needed."</p>
                             <div className="flex items-center gap-3">
                                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-8 h-8 rounded-full bg-gray-700" />
                                 <div>
@@ -43,7 +43,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => {
                             </div>
                         </div>
                         <div className="flex gap-2 text-gray-500 text-xs">
-                            <span>© 2026 Billently Inc.</span>
+                            <span>© {new Date().getFullYear()} Billenty Inc.</span>
                         </div>
                     </div>
                 </div>
@@ -67,7 +67,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         </div>
-                        <span className="text-xl font-bold font-display tracking-tight text-gray-900 dark:text-white">Billently</span>
+                        <span className="text-xl font-bold font-display tracking-tight text-gray-900 dark:text-white">Billenty</span>
                     </div>
 
                     <div className="max-w-md mx-auto w-full">

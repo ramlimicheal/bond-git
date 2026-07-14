@@ -21,7 +21,11 @@ export default {
       },
       colors: {
         mint: '#6EE7B7',
-        primary: '#10B981',
+        primary: {
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669',
+        },
         'background-light': '#f3f4f6',
         'background-dark': '#111111',
         'card-dark': '#000000',

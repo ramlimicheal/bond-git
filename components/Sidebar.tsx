@@ -144,13 +144,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
                 >
                   Lawyers
                 </button>
-                <a
-                  href="/lawyer"
-                  onClick={(e) => { e.preventDefault(); window.location.assign('/lawyer'); }}
-                  className="block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50"
+                <button
+                  type="button"
+                  onClick={() => handleNav(Page.LAWYER_PORTAL)}
+                  className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${currentPage === Page.LAWYER_PORTAL ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}
                 >
                   Lawyer Portal
-                </a>
+                </button>
               </div>
             )}
           </div>

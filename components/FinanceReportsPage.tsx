@@ -59,6 +59,7 @@ export const FinanceReportsPage: React.FC = () => {
     a.href = URL.createObjectURL(blob);
     a.download = `billenty-invoices-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   if (loading) return <div className="p-8 text-gray-500">Loading…</div>;
@@ -82,12 +83,15 @@ export const FinanceReportsPage: React.FC = () => {
           {data.byMonth.map(([month, v]) => {
             const totalH = ((v.paid + v.outstanding) / maxBar) * 100;
             const paidH = v.paid ? (v.paid / (v.paid + v.outstanding)) * totalH : 0;
+            const outstandingH = totalH > 0 ? totalH - paidH : 0;
+            const paidHeight = totalH > 0 ? (paidH / totalH) * 100 : 0;
+            const outstandingHeight = totalH > 0 ? (outstandingH / totalH) * 100 : 0;
             return (
               <div key={month} className="flex-1 flex flex-col items-center justify-end gap-1">
                 <div className="text-[10px] text-gray-500 mb-1">{fmt(v.paid + v.outstanding)}</div>
                 <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-t overflow-hidden flex flex-col justify-end" style={{ height: `${Math.max(totalH, 4)}%` }}>
-                  <div className="bg-amber-400" style={{ height: `${100 - (paidH / totalH) * 100}%` }} />
-                  <div className="bg-green-500" style={{ height: `${(paidH / totalH) * 100}%` }} />
+                  <div className="bg-amber-400" style={{ height: `${outstandingHeight}%` }} />
+                  <div className="bg-green-500" style={{ height: `${paidHeight}%` }} />
                 </div>
                 <div className="text-xs text-gray-500">{month}</div>
               </div>

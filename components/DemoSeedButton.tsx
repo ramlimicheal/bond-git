@@ -16,6 +16,12 @@ export const DemoSeedButton: React.FC = () => {
 
   const seed = async () => {
     if (!orgId || !user) { toast.error('No workspace ready'); return; }
+    const { data: existing } = await supabase.from('clients').select('id').eq('org_id', orgId).limit(1);
+    if (existing && existing.length > 0) {
+      toast.info('Demo data already loaded');
+      setDone(true);
+      return;
+    }
     setRunning(true);
     try {
       // 1) Clients (3)

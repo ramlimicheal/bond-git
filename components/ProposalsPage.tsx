@@ -196,14 +196,20 @@ export const ProposalsPage: React.FC<ProposalsPageProps> = ({ searchQuery, onNav
                                             <Icons.Send size={14} />
                                             Share via WhatsApp
                                         </button>
-                                        <button className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5">
+                                        <button
+                                            onClick={() => toast.info('Email sending coming soon')}
+                                            className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+                                        >
                                             <Icons.Mail size={14} />
                                             Send Email
                                         </button>
                                     </>
                                 )}
                                 {proposal.status === 'Signed' && (
-                                    <button className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5">
+                                    <button
+                                        onClick={() => toast.info('PDF download coming soon')}
+                                        className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+                                    >
                                         <Icons.Download size={14} />
                                         Download Agreement
                                     </button>

@@ -5,6 +5,7 @@ import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import { generateQuotePDF, downloadBlob } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { useQuotes } from '../dataStore';
 
 interface QuoteDetailsPageProps {
     quote: Quote;
@@ -21,8 +22,9 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
     onDelete,
     onConvertToInvoice,
 }) => {
-    const { confirm } = useConfirmDialog();
+    const { confirm, DialogComponent } = useConfirmDialog();
     const { org } = useOrg();
+    const { update } = useQuotes();
     const quoteRef = useRef<HTMLDivElement>(null);
 
     const isAccepted = quote.status === 'Accepted';
@@ -49,7 +51,8 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
         toast.success('Quote link copied to clipboard');
     };
 
-    const handleSendToClient = () => {
+    const handleSendToClient = async () => {
+        await update(quote.id, { status: 'Sent' } as any);
         toast.success('Quote sent to client');
     };
 
@@ -65,11 +68,13 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
         } catch (e) { console.error(e); toast.error('Failed to generate PDF'); }
     };
 
-    const handleMarkAsAccepted = () => {
+    const handleMarkAsAccepted = async () => {
+        await update(quote.id, { status: 'Accepted' } as any);
         toast.success('Quote marked as accepted');
     };
 
-    const handleMarkAsDeclined = () => {
+    const handleMarkAsDeclined = async () => {
+        await update(quote.id, { status: 'Declined' } as any);
         toast.success('Quote marked as declined');
     };
 
@@ -309,11 +314,11 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
                             <div>
                                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">From</h3>
                                 <div className="space-y-1">
-                                    <p className="text-base font-semibold text-gray-900 dark:text-white">Breez Inc.</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">123 Business Rd.</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">San Francisco, CA 94107</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">United States</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">quotes@breezinc.com</p>
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white">{org?.name || 'Your Company'}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{org?.address_line1 || ''}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{[org?.city, org?.state].filter(Boolean).join(', ') || ''}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{org?.country || 'India'}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">{org?.email || ''}</p>
                                 </div>
                             </div>
 
@@ -391,6 +396,7 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
                     </div>
                 </div>
             </div>
+            {DialogComponent}
         </div>
     );
 };

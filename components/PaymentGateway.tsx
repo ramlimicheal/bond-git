@@ -10,7 +10,7 @@ interface PaymentGatewayProps {
 
 export const PaymentGateway: React.FC<PaymentGatewayProps> = ({
     amount,
-    currency = 'USD',
+    currency = 'INR',
     onSuccess,
     onError
 }) => {
@@ -23,21 +23,16 @@ export const PaymentGateway: React.FC<PaymentGatewayProps> = ({
     const handlePayment = async () => {
         setLoading(true);
         try {
-            console.log(`Processing payment of ${amount} ${currency}`);
-
             // Mock payment processing
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             if (stripeKey || paypalClientId) {
-                console.log('Using configured payment provider');
                 onSuccess?.(`txn_${Date.now()}`);
             } else {
-                console.warn('No payment provider configured');
                 // Simulate success for demo purposes even without keys
                 onSuccess?.(`demo_txn_${Date.now()}`);
             }
         } catch (err) {
-            console.error('Payment failed', err);
             onError?.('Payment processing error');
         } finally {
             setLoading(false);

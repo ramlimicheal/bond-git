@@ -10,7 +10,7 @@ const empty: Omit<Product, 'id' | 'createdAt'> = { name: '', description: '', ca
 
 const ProductsPage: React.FC = () => {
     const { items, create, update, remove } = useProducts();
-    const { confirm } = useConfirmDialog();
+    const { confirm, DialogComponent } = useConfirmDialog();
     const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null);
     const [filter, setFilter] = useState<string>('all');
     const [search, setSearch] = useState('');
@@ -157,6 +157,7 @@ const ProductsPage: React.FC = () => {
                     </form>
                 </div>
             )}
+            {DialogComponent}
         </div>
     );
 };

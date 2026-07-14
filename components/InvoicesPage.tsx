@@ -21,7 +21,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
   const [activeTab, setActiveTab] = useState<Tab>(Tab.INVOICE);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { items: invoices, loading: isLoading, remove } = useInvoices();
-  const { confirm } = useConfirmDialog();
+  const { confirm, DialogComponent } = useConfirmDialog();
   const error: string | null = null;
 
   // Advanced State
@@ -413,6 +413,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
           )}
         </>
       )}
+      {DialogComponent}
     </>
   );
 };

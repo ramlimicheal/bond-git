@@ -3,6 +3,7 @@ import { Invoice } from '../types';
 import { Icons } from './Icon';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { useInvoices } from '../dataStore';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import LegalNoticesPanel from './LegalNoticesPanel';
@@ -23,6 +24,7 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
     const { confirm } = useConfirmDialog();
     const invoiceRef = useRef<HTMLDivElement>(null);
     const { org } = useOrg();
+    const { update } = useInvoices();
 
     const isPaid = invoice.status === 'Paid';
     const totalAmount = invoice.amountDue + invoice.amountPaid;
@@ -70,7 +72,8 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
         toast.success('Reminder sent to client');
     };
 
-    const handleMarkAsPaid = () => {
+    const handleMarkAsPaid = async () => {
+        await update(invoice.id, { status: 'Paid', amountPaid: invoice.amountDue, amountDue: 0 } as any);
         toast.success('Invoice marked as paid');
     };
 
@@ -301,11 +304,11 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
                             <div>
                                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">From</h3>
                                 <div className="space-y-1">
-                                    <p className="text-base font-semibold text-gray-900 dark:text-white">Breez Inc.</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">123 Business Rd.</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">San Francisco, CA 94107</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">United States</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">billing@breezinc.com</p>
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white">{org?.name || 'Your Company'}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{org?.address_line1 || ''}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{[org?.city, org?.state].filter(Boolean).join(', ') || ''}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{org?.country || 'India'}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">{org?.email || ''}</p>
                                 </div>
                             </div>
 

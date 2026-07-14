@@ -5,6 +5,7 @@ import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import { generateProposalPDF } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { useProposals } from '../dataStore';
 
 interface ProposalDetailsPageProps {
     proposal: Proposal;
@@ -19,8 +20,9 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
     onEdit,
     onDelete,
 }) => {
-    const { confirm } = useConfirmDialog();
+    const { confirm, DialogComponent } = useConfirmDialog();
     const { org } = useOrg();
+    const { update } = useProposals();
     const signatureRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null);
@@ -132,11 +134,16 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
         setClientSignatureUrl(null);
     };
 
-    const handleSign = () => {
+    const handleSign = async () => {
         if (!clientSignatureUrl) {
             toast.error('Please draw your signature first');
             return;
         }
+        await update(proposal.id, {
+            status: 'Signed',
+            clientSignature: clientSignatureUrl,
+            clientSignedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        } as any);
         toast.success('Proposal signed successfully! Both parties are now bound by this agreement.');
     };
 
@@ -423,6 +430,7 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
                     </p>
                 </div>
             </div>
+            {DialogComponent}
         </div>
     );
 };

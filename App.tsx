@@ -196,6 +196,7 @@ function AppContent() {
             case Page.REPORTS: navigate('/reports'); break;
             case Page.LEGAL_CASES: navigate('/legal/cases'); break;
             case Page.LAWYERS: navigate('/legal/lawyers'); break;
+            case Page.LAWYER_PORTAL: navigate('/lawyer'); break;
             default: navigate('/dashboard');
         }
     };
