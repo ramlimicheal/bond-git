@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icons } from './Icon';
 import { toast } from './Toast';
 import { useOrg } from '../org.context';
@@ -17,13 +17,110 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     const [autoNoticeEnabled, setAutoNoticeEnabled] = useState<boolean>(org?.auto_notice_enabled ?? false);
     const [autoNoticeDays, setAutoNoticeDays] = useState<number>(org?.auto_notice_days ?? 30);
     const [savingAuto, setSavingAuto] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    React.useEffect(() => {
-        if (org) {
-            setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
-            setAutoNoticeDays(org.auto_notice_days ?? 30);
+    // Company Settings State
+    const [companyName, setCompanyName] = useState('');
+    const [companyEmail, setCompanyEmail] = useState('');
+    const [companyPhone, setCompanyPhone] = useState('');
+    const [companyAddress, setCompanyAddress] = useState('');
+    const [companyCity, setCompanyCity] = useState('');
+    const [companyState, setCompanyState] = useState('');
+    const [companyPincode, setCompanyPincode] = useState('');
+    const [companyCountry, setCompanyCountry] = useState('India');
+    const [companyGSTIN, setCompanyGSTIN] = useState('');
+    const [companyPAN, setCompanyPAN] = useState('');
+    const [companyWebsite, setCompanyWebsite] = useState('');
+
+    // Banking Settings State
+    const [bankName, setBankName] = useState('');
+    const [accountName, setAccountName] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [ifscCode, setIfscCode] = useState('');
+    const [branchName, setBranchName] = useState('');
+    const [upiId, setUpiId] = useState('');
+
+    // Invoice Settings State
+    const [invoicePrefix, setInvoicePrefix] = useState('INV');
+    const [quotePrefix, setQuotePrefix] = useState('QT');
+    const [defaultCurrency, setDefaultCurrency] = useState('INR');
+    const [defaultTaxRate, setDefaultTaxRate] = useState('18');
+    const [defaultPaymentTerms, setDefaultPaymentTerms] = useState('15');
+    const [invoiceNotes, setInvoiceNotes] = useState('Thank you for your business!');
+    const [invoiceTerms, setInvoiceTerms] = useState('Payment is due within the specified terms. Late payments may incur additional charges.');
+
+    // Notification toggles
+    const [notifEmail, setNotifEmail] = useState<Record<string, boolean>>({ sent: true, viewed: true, paid: true, overdue: true });
+    const [notifWhatsapp, setNotifWhatsapp] = useState<Record<string, boolean>>({ sent: false, viewed: false, paid: false, overdue: false });
+
+    // Load org data into local state when org is available
+    useEffect(() => {
+        if (!org) return;
+        setCompanyName(org.name || '');
+        setCompanyEmail(org.email || '');
+        setCompanyPhone(org.phone || '');
+        setCompanyAddress(org.address_line1 || '');
+        setCompanyCity(org.city || '');
+        setCompanyState(org.state || '');
+        setCompanyPincode(org.pincode || '');
+        setCompanyCountry(org.country || 'India');
+        setCompanyGSTIN(org.gstin || '');
+        setCompanyPAN(org.pan || '');
+        setCompanyWebsite(org.website || '');
+        setUpiId(org.upi_vpa || '');
+        setBankName(org.bank_name || '');
+        setAccountNumber(org.bank_account_number || '');
+        setIfscCode(org.bank_ifsc || '');
+        setInvoicePrefix(org.invoice_prefix || 'INV');
+        setQuotePrefix(org.quote_prefix || 'QT');
+        setInvoiceNotes(org.default_notes || 'Thank you for your business!');
+        setInvoiceTerms(org.default_terms || 'Payment is due within the specified terms. Late payments may incur additional charges.');
+        setDefaultTaxRate(String(org.default_tax_rate ?? 18));
+        setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
+        setAutoNoticeDays(org.auto_notice_days ?? 30);
+        if (org.notifications) {
+            setNotifEmail(org.notifications.email || { sent: true, viewed: true, paid: true, overdue: true });
+            setNotifWhatsapp(org.notifications.whatsapp || { sent: false, viewed: false, paid: false, overdue: false });
         }
     }, [org]);
+
+    const handleSave = async () => {
+        if (!orgId) { toast.error('No organization found'); return; }
+        setSaving(true);
+        const updates: Record<string, unknown> = {
+            name: companyName,
+            email: companyEmail,
+            phone: companyPhone,
+            address_line1: companyAddress,
+            city: companyCity,
+            state: companyState,
+            pincode: companyPincode,
+            country: companyCountry,
+            gstin: companyGSTIN,
+            pan: companyPAN,
+            website: companyWebsite,
+            upi_vpa: upiId,
+            bank_name: bankName,
+            bank_account_number: accountNumber,
+            bank_ifsc: ifscCode,
+            invoice_prefix: invoicePrefix,
+            quote_prefix: quotePrefix,
+            default_tax_rate: Number(defaultTaxRate),
+            default_notes: invoiceNotes,
+            default_terms: invoiceTerms,
+            notifications: { email: notifEmail, whatsapp: notifWhatsapp },
+        };
+
+        const { error } = await (supabase as any)
+            .from('organizations')
+            .update(updates)
+            .eq('id', orgId);
+
+        setSaving(false);
+        if (error) { toast.error(`Could not save: ${error.message}`); return; }
+        await refresh();
+        toast.success('Settings saved successfully');
+    };
 
     const saveAutoNotice = async () => {
         if (!orgId) return;
@@ -59,40 +156,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         } catch (e) {
             toast.error((e as Error).message);
         } finally { setScanning(false); }
-    };
-
-    // Company Settings State
-    const [companyName, setCompanyName] = useState('');
-    const [companyEmail, setCompanyEmail] = useState('');
-    const [companyPhone, setCompanyPhone] = useState('');
-    const [companyAddress, setCompanyAddress] = useState('');
-    const [companyCity, setCompanyCity] = useState('');
-    const [companyState, setCompanyState] = useState('');
-    const [companyPincode, setCompanyPincode] = useState('');
-    const [companyCountry, setCompanyCountry] = useState('India');
-    const [companyGSTIN, setCompanyGSTIN] = useState('');
-    const [companyPAN, setCompanyPAN] = useState('');
-    const [companyWebsite, setCompanyWebsite] = useState('');
-
-    // Banking Settings State
-    const [bankName, setBankName] = useState('');
-    const [accountName, setAccountName] = useState('');
-    const [accountNumber, setAccountNumber] = useState('');
-    const [ifscCode, setIfscCode] = useState('');
-    const [branchName, setBranchName] = useState('');
-    const [upiId, setUpiId] = useState('');
-
-    // Invoice Settings State
-    const [invoicePrefix, setInvoicePrefix] = useState('INV-');
-    const [quotePrefix, setQuotePrefix] = useState('QT-');
-    const [defaultCurrency, setDefaultCurrency] = useState('INR');
-    const [defaultTaxRate, setDefaultTaxRate] = useState('18');
-    const [defaultPaymentTerms, setDefaultPaymentTerms] = useState('15');
-    const [invoiceNotes, setInvoiceNotes] = useState('Thank you for your business!');
-    const [invoiceTerms, setInvoiceTerms] = useState('Payment is due within the specified terms. Late payments may incur additional charges.');
-
-    const handleSave = () => {
-        toast.success('Settings saved successfully');
     };
 
     const tabs = [
@@ -145,9 +208,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                 <div className="p-4 border-t border-gray-200 dark:border-gray-800">
                     <button
                         onClick={handleSave}
-                        className="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                        disabled={saving}
+                        className="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
                     >
-                        Save All Settings
+                        {saving ? 'Saving...' : 'Save All Settings'}
                     </button>
                 </div>
             </div>
@@ -501,22 +565,35 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
 
                             <div className="p-6 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg space-y-4">
                                 {[
-                                    { label: 'Invoice Paid', desc: 'Get notified when a client pays an invoice' },
-                                    { label: 'Invoice Overdue', desc: 'Reminder when an invoice becomes overdue' },
-                                    { label: 'Quote Accepted', desc: 'When a client accepts your quote' },
-                                    { label: 'Quote Declined', desc: 'When a client declines your quote' },
-                                    { label: 'Weekly Summary', desc: 'Weekly report of your invoicing activity' },
-                                ].map((item, idx) => (
-                                    <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                    { key: 'paid', label: 'Invoice Paid', desc: 'Get notified when a client pays an invoice' },
+                                    { key: 'overdue', label: 'Invoice Overdue', desc: 'Reminder when an invoice becomes overdue' },
+                                    { key: 'viewed', label: 'Quote Viewed', desc: 'When a client views your quote' },
+                                    { key: 'sent', label: 'Document Sent', desc: 'Confirmation when invoice/quote is sent' },
+                                ].map((item) => (
+                                    <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
                                         <div>
                                             <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
                                             <p className="text-xs text-gray-500">{item.desc}</p>
                                         </div>
-                                        <button className="relative w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors">
-                                            <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <span className="text-xs text-gray-500 mr-1">Email</span>
+                                            <button
+                                                onClick={() => setNotifEmail(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                                className={`relative w-10 h-5 rounded-full transition-colors ${notifEmail[item.key] ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                                            >
+                                                <span className={`absolute top-0.5 w-4 h-4 rounded-full shadow transition-transform ${notifEmail[item.key] ? 'left-5 bg-white dark:bg-gray-900' : 'left-0.5 bg-white'}`} />
+                                            </button>
+                                            <span className="text-xs text-gray-500 ml-2 mr-1">WhatsApp</span>
+                                            <button
+                                                onClick={() => setNotifWhatsapp(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                                className={`relative w-10 h-5 rounded-full transition-colors ${notifWhatsapp[item.key] ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                                            >
+                                                <span className={`absolute top-0.5 w-4 h-4 rounded-full shadow transition-transform ${notifWhatsapp[item.key] ? 'left-5 bg-white dark:bg-gray-900' : 'left-0.5 bg-white'}`} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
+                                <p className="text-xs text-gray-500 pt-2">Changes are saved when you click "Save All Settings".</p>
                             </div>
 
                             <div className="mt-6 p-6 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg space-y-4">

@@ -10,12 +10,18 @@ export interface Organization {
   pan: string | null;
   email: string | null;
   phone: string | null;
+  website?: string | null;
   logo_url: string | null;
   signature_url: string | null;
   upi_vpa: string | null;
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  bank_ifsc?: string | null;
   invoice_prefix: string | null;
   quote_prefix: string | null;
   proposal_prefix: string | null;
+  default_terms?: string | null;
+  default_notes?: string | null;
   plan: string;
   trial_ends_at: string;
   created_at: string;
@@ -24,6 +30,8 @@ export interface Organization {
   state?: string | null;
   address_line1?: string | null;
   city?: string | null;
+  pincode?: string | null;
+  country?: string | null;
   default_state_code?: string | null;
   default_sac?: string | null;
   default_tax_rate?: number | null;
