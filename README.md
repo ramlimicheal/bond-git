@@ -1,20 +1,66 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Billenty - Invoice & Proposal Management
 
-# Run and deploy your AI Studio app
+Billenty is a GST-compliant invoicing, quotes, and proposal management system designed for Indian freelancers and small businesses. Create professional invoices, track payments, send quotes, and generate legally binding proposals with e-signatures.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Nd61qGDkk2m2hW0tvl0hJB12A08Isclp
+- **Invoices** - Create, track, and manage GST-compliant invoices with PDF export
+- **Quotes** - Send professional quotes and convert them to invoices in one click
+- **Proposals** - Generate AI-powered agreements with e-signature support
+- **Clients** - Manage client database with GSTIN/PAN tracking
+- **Products** - Catalog of reusable products and services
+- **Dashboard** - Revenue overview, stats, and financial reports
+- **Dark Mode** - Full dark mode support
+- **UPI Payments** - UPI ID and QR code support for Indian payments
+
+## Tech Stack
+
+- React 18 + TypeScript
+- Vite 5
+- Tailwind CSS 3
+- Supabase (Auth + Database)
+- React Router DOM v6
+- pdf-lib + html2canvas for PDF generation
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js 18+
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```
+   npm install
+   ```
+
+2. Copy `.env.example` to `.env` and fill in your Supabase credentials:
+   ```
+   cp .env.example .env
+   ```
+
+3. Run the development server:
+   ```
+   npm run dev
+   ```
+
+4. Open http://localhost:8080
+
+## Build for Production
+
+```
+npm run build
+```
+
+Output is in the `dist/` directory.
+
+## Deploy
+
+The app is configured for Vercel. Connect your repo to Vercel and it will auto-deploy.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (port 8080) |
+| `npm run build` | TypeScript check + production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run test suite |

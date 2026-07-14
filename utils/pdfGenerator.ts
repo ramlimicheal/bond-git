@@ -120,8 +120,9 @@ async function buildInvoiceLikePDF(
 
   // Status pill
   const pillX = PAGE_W - MARGIN - 130;
-  page.drawRectangle({ x: pillX, y: PAGE_H - 80, width: 70, height: 16, color: doc.status.toLowerCase() === 'paid' ? rgb(0.15, 0.6, 0.2) : COLORS.text });
-  drawText(page, doc.status.toUpperCase(), pillX + 8, PAGE_H - 76, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  const status = doc.status || 'draft';
+  page.drawRectangle({ x: pillX, y: PAGE_H - 80, width: 70, height: 16, color: status.toLowerCase() === 'paid' ? rgb(0.15, 0.6, 0.2) : COLORS.text });
+  drawText(page, status.toUpperCase(), pillX + 8, PAGE_H - 76, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
 
   let y = PAGE_H - 130;
 
