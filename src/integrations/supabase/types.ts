@@ -1388,8 +1388,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_lawyer_of: { Args: { _lawyer_id: string }; Returns: boolean }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      lawyer_is_attached_to_org_invoice: {
+        Args: { _lawyer_id: string }
+        Returns: boolean
+      }
       list_marketplace_lawyers: {
         Args: never
         Returns: {
