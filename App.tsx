@@ -28,8 +28,6 @@ import LawyerPortalPage from './components/LawyerPortalPage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { useAuth } from './auth.context';
 import { OrgProvider, useOrg } from './org.context';
-import { fetchInvoices, deleteInvoice } from './api.client';
-import { mapApiInvoiceToInvoice } from './mappers';
 import { useQuotes, useProposals, useInvoices } from './dataStore';
 import { toast } from './components/Toast';
 
@@ -58,18 +56,8 @@ function RedirectIfAuthed({ children }: { children: JSX.Element }) {
 function InvoiceDetailsRoute() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [invoice, setInvoice] = useState<Invoice | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchInvoices()
-            .then(list => {
-                const found = list.find(i => String(i.id) === id);
-                setInvoice(found ? mapApiInvoiceToInvoice(found) : null);
-            })
-            .finally(() => setLoading(false));
-    }, [id]);
-
+    const { items, loading, remove } = useInvoices();
+    const invoice = items.find(i => i.id === id) || null;
     if (loading) return <div className="p-8 text-gray-500">Loading…</div>;
     if (!invoice) return (
         <div className="p-8 text-center">
@@ -82,7 +70,7 @@ function InvoiceDetailsRoute() {
             invoice={invoice}
             onBack={() => navigate('/invoices')}
             onEdit={() => navigate('/invoices')}
-            onDelete={async (id) => { await deleteInvoice(Number(id)); toast.success('Invoice deleted'); navigate('/invoices'); }}
+            onDelete={async (iid) => { await remove(iid); toast.success('Invoice deleted'); navigate('/invoices'); }}
         />
     );
 }
@@ -105,7 +93,18 @@ function QuoteDetailsRoute() {
             onBack={() => navigate('/quotes')}
             onEdit={() => navigate('/quotes')}
             onDelete={(qid) => { remove(qid); toast.success('Quote deleted'); navigate('/quotes'); }}
-            onConvertToInvoice={() => { toast.success('Converting to invoice...'); navigate('/invoices/new'); }}
+            onConvertToInvoice={() => {
+                toast.success('Converting to invoice…');
+                navigate('/invoices/new', {
+                    state: {
+                        prefill: {
+                            clientName: quote.clientName,
+                            items: quote.items,
+                            notes: `Converted from quote ${quote.number}`,
+                        },
+                    },
+                });
+            }}
         />
     );
 }

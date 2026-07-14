@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icons } from './Icon';
 import { User } from '../types';
 import { UserModal } from './UserModal';
 import { toast } from './Toast';
-import { fetchUsers, createUser, updateUser, deleteUser as apiDeleteUser } from '../api.client.ts';
-import { mapApiUserToUser } from '../mappers.ts';
+import { supabase } from '../src/integrations/supabase/client';
+import { useOrg } from '../org.context';
+import { useConfirmDialog } from './ConfirmDialog';
+
+type OrgRole = 'owner' | 'admin' | 'accountant' | 'viewer';
+const roleToDisplay = (r: OrgRole): User['role'] =>
+  r === 'owner' || r === 'admin' ? 'Admin'
+  : r === 'accountant' ? 'Accountant'
+  : 'Viewer';
+const displayToRole = (r: User['role']): OrgRole =>
+  r === 'Admin' ? 'admin' : r === 'Accountant' ? 'accountant' : 'viewer';
 
 interface AccountsPageProps {
   searchQuery: string;
 }
 
 export const AccountsPage: React.FC<AccountsPageProps> = ({ searchQuery }) => {
+  const { orgId } = useOrg();
+  const { confirm } = useConfirmDialog();
   const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -18,26 +29,26 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({ searchQuery }) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [activeFilter, setActiveFilter] = useState<'All' | 'Invited'>('All');
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const apiUsers = await fetchUsers();
-        if (!mounted) return;
-        setUsers(apiUsers.map(mapApiUserToUser));
-      } catch (err) {
-        console.error(err);
-        if (mounted) setError('Failed to load users');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const refresh = useCallback(async () => {
+    if (!orgId) { setUsers([]); setLoading(false); return; }
+    setLoading(true); setError(null);
+    const { data, error: err } = await (supabase as any)
+      .from('organization_members')
+      .select('id, user_id, role, invited_email, invited_at, joined_at, profiles:profiles(full_name, avatar_url)')
+      .eq('org_id', orgId);
+    if (err) { setError('Failed to load team'); setLoading(false); return; }
+    const rows: User[] = (data || []).map((m: any) => ({
+      id: m.id,
+      name: m.profiles?.full_name || m.invited_email || 'Pending member',
+      email: m.invited_email || '',
+      role: roleToDisplay(m.role),
+      status: m.joined_at ? 'Active' : 'Invited',
+      lastActive: m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-GB') : '—',
+      avatarUrl: m.profiles?.avatar_url ?? undefined,
+    }));
+    setUsers(rows); setLoading(false);
+  }, [orgId]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -58,50 +69,37 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({ searchQuery }) => {
   };
 
   const handleAddUser = async (userData: Omit<User, 'id' | 'lastActive' | 'avatarUrl'>) => {
-    try {
-      const apiUser = await createUser({
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        status: userData.status,
-      });
-      const newUser = mapApiUserToUser(apiUser);
-      setUsers([...users, newUser]);
-      toast.success('User created successfully');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to create user. Please try again.');
-    }
+    if (!orgId) return;
+    const { error: err } = await (supabase as any).from('organization_members').insert({
+      org_id: orgId,
+      invited_email: userData.email,
+      invited_at: new Date().toISOString(),
+      role: displayToRole(userData.role),
+    });
+    if (err) { toast.error('Could not send invite'); return; }
+    toast.success('Invite recorded — user joins on next sign-in');
+    refresh();
   };
 
   const handleEditUser = async (userData: Omit<User, 'id' | 'lastActive' | 'avatarUrl'>) => {
     if (!selectedUser) return;
-    try {
-      const apiUser = await updateUser(Number(selectedUser.id), {
-        role: userData.role,
-        status: userData.status,
-      });
-      const updated = mapApiUserToUser(apiUser);
-      const updatedUsers = users.map((u) => (u.id === selectedUser.id ? updated : u));
-      setUsers(updatedUsers);
-      setSelectedUser(null);
-      toast.success('User updated successfully');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to update user. Please try again.');
-    }
+    const { error: err } = await (supabase as any)
+      .from('organization_members')
+      .update({ role: displayToRole(userData.role) })
+      .eq('id', selectedUser.id);
+    if (err) { toast.error('Could not update role'); return; }
+    toast.success('Role updated');
+    setSelectedUser(null);
+    refresh();
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Are you sure you want to remove this user?')) return;
-    try {
-      await apiDeleteUser(Number(id));
-      setUsers(users.filter(u => u.id !== id));
-      toast.success('User removed successfully');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete user. Please try again.');
-    }
+    const ok = await confirm({ title: 'Remove team member', message: 'Are you sure you want to remove this member?', variant: 'danger', confirmLabel: 'Remove' });
+    if (!ok) return;
+    const { error: err } = await (supabase as any).from('organization_members').delete().eq('id', id);
+    if (err) { toast.error('Could not remove member'); return; }
+    toast.success('Member removed');
+    refresh();
   };
 
   const openEditModal = (user: User) => {

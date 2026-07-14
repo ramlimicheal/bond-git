@@ -1,24 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchInvoices } from '../api.client';
-import { mapApiInvoiceToInvoice } from '../mappers';
-import { useQuotes, useProposals, useClients } from '../dataStore';
-import type { Invoice } from '../types';
+import { useQuotes, useProposals, useClients, useInvoices } from '../dataStore';
 import { Icons } from './Icon';
 
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { items: invoices, loading } = useInvoices();
     const { items: quotes } = useQuotes();
     const { items: proposals } = useProposals();
     const { items: clients } = useClients();
-
-    useEffect(() => {
-        fetchInvoices()
-            .then(r => setInvoices(r.map(mapApiInvoiceToInvoice)))
-            .finally(() => setLoading(false));
-    }, []);
 
     const totalRevenue = invoices.reduce((s, i) => s + i.amountPaid, 0);
     const outstanding = invoices.reduce((s, i) => s + i.amountDue, 0);

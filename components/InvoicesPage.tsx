@@ -1,13 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Icons } from './Icon';
 import { StatCard } from './StatCard';
 import { InvoiceCard } from './InvoiceCard';
-import { InvoiceFormModal } from './InvoiceFormModal';
 import { toast } from './Toast';
 import { Tab, Invoice, Page } from '../types';
 import { STATS_DATA } from '../constants';
-import { fetchInvoices, createInvoice, updateInvoice, deleteInvoice } from '../api.client.ts';
-import { mapApiInvoiceToInvoice } from '../mappers.ts';
+import { useInvoices } from '../dataStore';
+import { useConfirmDialog } from './ConfirmDialog';
 
 interface InvoicesPageProps {
   searchQuery: string;
@@ -21,12 +20,9 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
   // --- STATE ---
   const [activeTab, setActiveTab] = useState<Tab>(Tab.INVOICE);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null); // No longer needed
+  const { items: invoices, loading: isLoading, remove } = useInvoices();
+  const { confirm } = useConfirmDialog();
+  const error: string | null = null;
 
   // Advanced State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -36,90 +32,23 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const apiInvoices = await fetchInvoices();
-        if (!mounted) return;
-        setInvoices(apiInvoices.map(mapApiInvoiceToInvoice));
-      } catch (err) {
-        console.error(err);
-        if (mounted) setError('Failed to load invoices');
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
   // --- HANDLERS ---
 
-  const handleSaveInvoice = async (invoiceData: Omit<Invoice, 'id'>, invoiceId?: string) => {
-    try {
-      const issuedAt = new Date(invoiceData.issuedDate).toISOString();
-      const dueAt = new Date(invoiceData.dueDate).toISOString();
-
-      const payload = {
-        number: invoiceData.number,
-        status: invoiceData.status,
-        clientName: invoiceData.clientName,
-        clientType: invoiceData.clientType,
-        issuedAt,
-        dueAt,
-        amountPaid: invoiceData.amountPaid,
-        amountDue: invoiceData.amountDue,
-        items: invoiceData.items.map((item) => ({
-          description: item.description,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      };
-
-      if (invoiceId) {
-        // Update existing invoice
-        const apiInvoice = await updateInvoice(Number(invoiceId), payload);
-        const updated = mapApiInvoiceToInvoice(apiInvoice);
-        setInvoices(invoices.map(inv => inv.id === invoiceId ? updated : inv));
-        toast.success('Invoice updated successfully');
-      } else {
-        // Create new invoice
-        const apiInvoice = await createInvoice(payload);
-        const invoice = mapApiInvoiceToInvoice(apiInvoice);
-        setInvoices([invoice, ...invoices]);
-        toast.success('Invoice created successfully');
-      }
-
-      setEditingInvoice(null);
-    } catch (err) {
-      console.error(err);
-      toast.error(`Failed to ${invoiceId ? 'update' : 'create'} invoice. Please try again.`);
-    }
-  };
-
   const handleEditInvoice = (invoice: Invoice) => {
-    setEditingInvoice(invoice);
-    setIsFormModalOpen(true);
+    onNavigate(Page.INVOICE_DETAILS, invoice.id);
   };
 
   const handleDeleteInvoice = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
-    try {
-      await deleteInvoice(Number(id));
-      setInvoices(invoices.filter(inv => inv.id !== id));
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete invoice. Please try again.');
-    }
+    const ok = await confirm({
+      title: 'Delete invoice',
+      message: 'This invoice will be permanently removed. This cannot be undone.',
+      variant: 'danger',
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
+    await remove(id);
+    setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+    toast.success('Invoice deleted');
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
@@ -127,29 +56,17 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} invoices?`)) return;
-
-    const idsToDelete: string[] = Array.from(selectedIds);
-    const failedIds: string[] = [];
-
-    // Delete each invoice via API
-    for (const id of idsToDelete) {
-      try {
-        await deleteInvoice(Number(id));
-      } catch (err) {
-        console.error(`Failed to delete invoice ${id}:`, err);
-        failedIds.push(id);
-      }
-    }
-
-    // Update local state - remove successfully deleted invoices
-    const successfullyDeleted: string[] = idsToDelete.filter(id => !failedIds.includes(id));
-    setInvoices(invoices.filter(inv => !successfullyDeleted.includes(inv.id)));
-    setSelectedIds(new Set(failedIds)); // Keep failed ones selected
-
-    if (failedIds.length > 0) {
-      toast.error(`Failed to delete ${failedIds.length} invoice(s). Please try again.`);
-    }
+    const ok = await confirm({
+      title: `Delete ${selectedIds.size} invoices`,
+      message: 'These invoices will be permanently removed. This cannot be undone.',
+      variant: 'danger',
+      confirmLabel: 'Delete all',
+    });
+    if (!ok) return;
+    const ids = Array.from(selectedIds);
+    for (const id of ids) await remove(id);
+    setSelectedIds(new Set());
+    toast.success(`${ids.length} invoice(s) deleted`);
   };
 
   const handleToggleSelect = (id: string) => {
@@ -240,13 +157,6 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ searchQuery, onNavig
 
   return (
     <>
-      <InvoiceFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => { setIsFormModalOpen(false); setEditingInvoice(null); }}
-        onSubmit={handleSaveInvoice}
-        editInvoice={editingInvoice}
-      />
-
       {/* Header Section */}
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-8">
         <div>
