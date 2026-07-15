@@ -88,17 +88,17 @@ const FAQS = [
 ];
 
 const Nav: React.FC = () => (
-  <div className="sticky top-4 z-40 px-4">
-    <header className="max-w-6xl mx-auto bg-white/90 backdrop-blur border border-neutral-200 rounded-full shadow-sm">
-      <div className="h-14 pl-6 pr-2 flex items-center justify-between">
+  <div className="sticky top-3 z-40 px-3">
+    <header className="bg-white border border-neutral-200 rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div className="h-[72px] pl-6 pr-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[11px] font-bold">B</div>
-          <span className="font-display font-semibold tracking-tight text-neutral-900">Billenty</span>
+          <div className="w-7 h-7 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[12px] font-bold">B</div>
+          <span className="font-semibold tracking-tight text-neutral-900 text-lg">Billenty</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-8 text-sm text-neutral-600">
+        <nav className="hidden md:flex items-center gap-10 text-[15px] text-neutral-700 absolute left-1/2 -translate-x-1/2">
           {NAV.map(n => <a key={n.label} href={n.href} className="hover:text-neutral-900 transition-colors">{n.label}</a>)}
         </nav>
-        <Link to="/signup" className="bg-neutral-900 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-neutral-800 transition-colors">
+        <Link to="/signup" className="bg-neutral-900 text-white text-sm font-medium px-6 py-3 rounded-xl hover:bg-neutral-800 transition-colors">
           Get Started
         </Link>
       </div>
