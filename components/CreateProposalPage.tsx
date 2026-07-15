@@ -58,6 +58,20 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
     // AI Agreement Generation
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
+    // Fair Price Engine
+    const [fpOpen, setFpOpen] = useState(false);
+    const [fpLoading, setFpLoading] = useState(false);
+    const [fpScope, setFpScope] = useState('');
+    const [fpTimeline, setFpTimeline] = useState<number>(4);
+    const [fpClientType, setFpClientType] = useState<'startup' | 'smb' | 'enterprise' | 'agency'>('smb');
+    const [fpCurrency, setFpCurrency] = useState<'INR' | 'USD'>('INR');
+    const [fpResult, setFpResult] = useState<null | {
+        range: { low: number; median: number; high: number; currency: string; symbol: string };
+        rationale: string;
+        citations: Array<{ url: string; note?: string }>;
+        markdown: string;
+    }>(null);
+
     // Signature
     const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
     const [signerName, setSignerName] = useState('');
@@ -107,6 +121,63 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
         } finally {
             setIsGeneratingAI(false);
         }
+    };
+
+    const handleFairPriceCheck = async () => {
+        if (!projectType) { toast.error('Choose a project type first'); return; }
+        setFpLoading(true);
+        setFpResult(null);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/fair-price`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fair-price`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({
+                    projectType,
+                    scope: fpScope,
+                    timelineWeeks: fpTimeline,
+                    clientRegion: 'india',
+                    clientType: fpClientType,
+                    currency: fpCurrency,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+            setFpResult(data);
+            toast.success('Market rates fetched');
+        } catch (e) {
+            toast.error((e as Error).message || 'Fair Price check failed');
+        } finally {
+            setFpLoading(false);
+        }
+    };
+
+    const insertFairPriceSection = () => {
+        if (!fpResult) return;
+        const newSection: ProposalSection = {
+            id: `mra-${Date.now()}`,
+            title: 'Market Rate Analysis',
+            content: fpResult.markdown,
+        };
+        // Insert before "Investment" if present, else append.
+        const idx = sections.findIndex(s => s.title.toLowerCase().includes('investment'));
+        if (idx >= 0) {
+            const next = [...sections];
+            next.splice(idx, 0, newSection);
+            setSections(next);
+        } else {
+            setSections([...sections, newSection]);
+        }
+        // Prefill totalValue with median if empty.
+        if (!totalValue && fpResult.range.currency === 'INR') {
+            setTotalValue(String(fpResult.range.median));
+        }
+        setFpOpen(false);
+        toast.success('Market Rate Analysis inserted into proposal');
     };
 
     // Signature Canvas Handlers
@@ -245,6 +316,14 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
 
                     {/* AI Generate Button */}
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                            onClick={() => setFpOpen(true)}
+                            className="w-full py-3 mb-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        >
+                            <Icons.TrendingUp size={16} />
+                            Fair Price Check
+                        </button>
+                        <p className="text-xs text-gray-500 text-center mb-3">Live market rates from the web</p>
                         <button
                             onClick={handleGenerateAIAgreement}
                             disabled={isGeneratingAI}
@@ -454,6 +533,109 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
                     <p className="text-center text-xs text-gray-400 mt-6">Powered by BILLENTY • Legally binding under Indian Contract Act, 1872</p>
                 </div>
             </div>
+
+            {/* === FAIR PRICE MODAL === */}
+            {fpOpen && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => !fpLoading && setFpOpen(false)}>
+                    <div className="bg-white dark:bg-gray-950 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Icons.TrendingUp size={18} className="text-orange-500" />
+                                    Fair Price Engine
+                                </h2>
+                                <p className="text-xs text-gray-500 mt-1">Live market rates for <span className="font-medium text-gray-700 dark:text-gray-300">{projectType}</span> · scraped from freelance platforms & studio rate cards</p>
+                            </div>
+                            <button onClick={() => !fpLoading && setFpOpen(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                                <Icons.X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto flex-1">
+                            {!fpResult && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Scope Details</label>
+                                        <textarea
+                                            value={fpScope}
+                                            onChange={(e) => setFpScope(e.target.value)}
+                                            placeholder="e.g. 8-page Shopify site, custom illustrations, 2 rounds of revisions"
+                                            rows={3}
+                                            className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Timeline (weeks)</label>
+                                            <input type="number" min={1} max={52} value={fpTimeline} onChange={(e) => setFpTimeline(parseInt(e.target.value) || 1)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Client Type</label>
+                                            <select value={fpClientType} onChange={(e) => setFpClientType(e.target.value as any)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white">
+                                                <option value="startup">Startup</option>
+                                                <option value="smb">SMB</option>
+                                                <option value="enterprise">Enterprise</option>
+                                                <option value="agency">Agency</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Currency</label>
+                                            <select value={fpCurrency} onChange={(e) => setFpCurrency(e.target.value as any)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white">
+                                                <option value="INR">INR ₹</option>
+                                                <option value="USD">USD $</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleFairPriceCheck}
+                                        disabled={fpLoading}
+                                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {fpLoading ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Scanning the web…</> : <>Check Fair Price</>}
+                                    </button>
+                                    <p className="text-xs text-gray-400 text-center">Uses Firecrawl + Billenty AI · takes ~10-15 seconds</p>
+                                </div>
+                            )}
+                            {fpResult && (
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {(['low', 'median', 'high'] as const).map((k) => (
+                                            <div key={k} className={`p-4 rounded-xl border ${k === 'median' ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10' : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900'}`}>
+                                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{k}</p>
+                                                <p className="text-xl font-bold text-gray-900 dark:text-white">{fpResult.range.symbol}{fpResult.range[k].toLocaleString(fpResult.range.currency === 'INR' ? 'en-IN' : 'en-US')}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Rationale</p>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{fpResult.rationale}</p>
+                                    </div>
+                                    {fpResult.citations?.length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sources ({fpResult.citations.length})</p>
+                                            <ul className="space-y-2">
+                                                {fpResult.citations.map((c, i) => (
+                                                    <li key={i} className="text-xs">
+                                                        <a href={c.url} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline break-all">{c.url}</a>
+                                                        {c.note && <span className="text-gray-500"> — {c.note}</span>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2 pt-2">
+                                        <button onClick={() => setFpResult(null)} className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                                            Refine
+                                        </button>
+                                        <button onClick={insertFairPriceSection} className="flex-1 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100">
+                                            Insert into Proposal
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
