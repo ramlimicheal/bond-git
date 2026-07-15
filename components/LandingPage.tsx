@@ -182,33 +182,62 @@ const Testimonials: React.FC = () => (
 );
 
 const CTA: React.FC = () => (
-  <section id="pricing" className="py-24 px-6 bg-neutral-50">
-    <div className="max-w-4xl mx-auto text-center">
-      <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-        Ready to <em className="italic">automate</em> your revenue?
-      </h2>
-      <p className="mt-6 text-neutral-600 text-lg">Start your 14-day free trial. No credit card required. Cancel anytime.</p>
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <Link to="/signup" className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-full transition-colors">Get started now</Link>
-        <Link to="/login" className="bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900 font-medium px-6 py-3 rounded-full transition-colors">Sign in</Link>
+  <section id="pricing" className="py-24 px-6 bg-white">
+    <div className="max-w-6xl mx-auto">
+      <div
+        className="relative rounded-3xl px-6 py-24 text-center overflow-hidden"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px)',
+          backgroundSize: '96px 96px',
+          backgroundColor: '#fafafa',
+        }}
+      >
+        <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+          Ready to <em className="italic">automate</em> your revenue?
+        </h2>
+        <p className="mt-6 text-neutral-600 text-lg">Start your 14-day free trial. No credit card required. Cancel anytime.</p>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <Link to="/signup" className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-full transition-colors">Get started now</Link>
+          <a href="#pricing" className="bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900 font-medium px-6 py-3 rounded-full transition-colors">View pricing</a>
+        </div>
       </div>
     </div>
   </section>
 );
 
 const Footer: React.FC = () => (
-  <footer id="contact" className="py-12 px-6 bg-white border-t border-neutral-200">
-    <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[11px] font-bold">B</div>
-        <span className="font-display font-semibold text-neutral-900">Billenty</span>
-        <span className="text-neutral-500 text-sm ml-2">© {new Date().getFullYear()}</span>
+  <footer id="contact" className="bg-neutral-950 text-neutral-300 rounded-t-3xl">
+    <div className="max-w-6xl mx-auto px-8 py-16 grid md:grid-cols-4 gap-10">
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center text-neutral-900 text-[11px] font-bold">B</div>
+          <span className="font-display font-semibold text-white">Billenty</span>
+        </div>
+        <p className="text-sm text-neutral-400 leading-relaxed max-w-xs">
+          Bill, collect and enforce payment automatically. Revenue automation built for India&rsquo;s design studios.
+        </p>
       </div>
-      <div className="flex items-center gap-6 text-sm text-neutral-500">
-        <a href="#features" className="hover:text-neutral-900">Features</a>
-        <a href="#how" className="hover:text-neutral-900">How it works</a>
-        <a href="#pricing" className="hover:text-neutral-900">Pricing</a>
-        <Link to="/login" className="hover:text-neutral-900">Sign in</Link>
+      {[
+        { title: 'Product', links: ['Features', 'How it works', 'Pricing', 'Integrations', 'Changelog'] },
+        { title: 'Company', links: ['About', 'Careers', 'Blog', 'Contact', 'Press'] },
+        { title: 'Resources', links: ['Documentation', 'Help center', 'Community', 'Guides', 'API'] },
+      ].map(col => (
+        <div key={col.title}>
+          <h4 className="text-white font-semibold mb-4">{col.title}</h4>
+          <ul className="space-y-3 text-sm text-neutral-400">
+            {col.links.map(l => <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+    <div className="border-t border-neutral-800">
+      <div className="max-w-6xl mx-auto px-8 py-6 flex flex-wrap items-center justify-between text-sm text-neutral-500 gap-3">
+        <span>© {new Date().getFullYear()} Billenty. All rights reserved.</span>
+        <div className="flex items-center gap-6">
+          <a href="#" className="hover:text-white">Privacy Policy</a>
+          <a href="#" className="hover:text-white">Terms of Service</a>
+        </div>
       </div>
     </div>
   </footer>
