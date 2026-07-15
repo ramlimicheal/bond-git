@@ -2,6 +2,22 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from './src/integrations/supabase/client';
 import { useOrg } from './org.context';
 import type { Client, Product, Quote, Proposal, Invoice } from './types';
+import { checkEntitlement, incrementUsage, type Meter } from './utils/entitlements';
+import { toast } from './components/Toast';
+
+// One-time listener: surface entitlement blocks as toasts without coupling
+// every create call site to the toast module.
+if (typeof window !== 'undefined' && !(window as any).__billentyEntitlementListener) {
+  (window as any).__billentyEntitlementListener = true;
+  window.addEventListener('billenty:entitlement-blocked', (e: any) => {
+    const d = e.detail || {};
+    const label = String(d.feature || 'this action').replace(/_/g, ' ');
+    const msg = d.reason === 'forbidden' ? 'Not authorised.'
+      : d.reason === 'no_subscription' ? 'No active subscription. Please choose a plan.'
+      : `Plan limit reached for ${label} (${d.used}/${d.limit}). Upgrade to continue.`;
+    toast.warning(msg);
+  });
+}
 
 // ============ MAPPERS ============
 const mapClient = (r: any): Client => ({
@@ -104,7 +120,12 @@ const invoiceToRow = (inv: Partial<Invoice>, orgId: string) => {
 };
 
 // ============ GENERIC HOOK ============
-type Mapper<T> = { table: string; toApp: (r: any) => T; toRow: (item: any, orgId: string) => any };
+type Mapper<T> = {
+  table: string;
+  toApp: (r: any) => T;
+  toRow: (item: any, orgId: string) => any;
+  meter?: Meter; // when set, create() runs check_entitlement + increments the meter
+};
 
 function useTable<T extends { id: string }>(m: Mapper<T>) {
   const { orgId, loading: orgLoading } = useOrg();
@@ -124,10 +145,24 @@ function useTable<T extends { id: string }>(m: Mapper<T>) {
 
   const create = useCallback(async (data: Omit<T, 'id'> | Partial<T>): Promise<T | null> => {
     if (!orgId) return null;
+    if (m.meter) {
+      const ent = await checkEntitlement(orgId, m.meter);
+      if (!ent.allowed) {
+        console.warn(`[${m.table}] blocked by entitlement`, ent);
+        // Broadcast so a top-level listener can toast without importing here.
+        try {
+          window.dispatchEvent(new CustomEvent('billenty:entitlement-blocked', {
+            detail: { feature: m.meter, ...ent },
+          }));
+        } catch { /* SSR-safe no-op */ }
+        return null;
+      }
+    }
     const row = m.toRow(data, orgId);
     const { data: inserted, error } = await db.from(m.table).insert(row).select('*').single();
     if (error || !inserted) { console.error(`[${m.table}] insert`, error); return null; }
     const mapped = m.toApp(inserted);
+    if (m.meter) { void incrementUsage(orgId, m.meter, 1); }
     setItems((prev) => [mapped, ...prev]);
     return mapped;
   }, [orgId, m, db]);
@@ -155,9 +190,9 @@ function useTable<T extends { id: string }>(m: Mapper<T>) {
 
 export const useClients = () => useTable<Client>({ table: 'clients', toApp: mapClient, toRow: clientToRow });
 export const useProducts = () => useTable<Product>({ table: 'products', toApp: mapProduct, toRow: productToRow });
-export const useQuotes = () => useTable<Quote>({ table: 'quotes', toApp: mapQuote, toRow: quoteToRow });
-export const useProposals = () => useTable<Proposal>({ table: 'proposals', toApp: mapProposal, toRow: proposalToRow });
-export const useInvoices = () => useTable<Invoice>({ table: 'invoices', toApp: mapInvoice, toRow: invoiceToRow });
+export const useQuotes = () => useTable<Quote>({ table: 'quotes', toApp: mapQuote, toRow: quoteToRow, meter: 'quotes' });
+export const useProposals = () => useTable<Proposal>({ table: 'proposals', toApp: mapProposal, toRow: proposalToRow, meter: 'proposals' });
+export const useInvoices = () => useTable<Invoice>({ table: 'invoices', toApp: mapInvoice, toRow: invoiceToRow, meter: 'invoices' });
 
 // Sync accessors kept for back-compat (return empty; server-backed now)
 export const getQuotes = (): Quote[] => [];
