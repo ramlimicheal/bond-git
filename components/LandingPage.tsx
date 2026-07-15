@@ -88,7 +88,7 @@ const FAQS = [
 ];
 
 const Nav: React.FC = () => (
-  <div className="sticky top-3 z-40 max-w-[1400px] mx-4 md:mx-auto">
+  <div className="sticky top-[25px] z-40 max-w-[1400px] mx-4 md:mx-auto">
     <header className="bg-white border border-neutral-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="h-[72px] pl-6 pr-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
@@ -107,7 +107,7 @@ const Nav: React.FC = () => (
 );
 
 const Hero: React.FC = () => (
-  <section className="relative pt-[124px] md:pt-[160px] pb-24 px-6">
+  <section className="relative pt-[122px] pb-24 px-6">
     <div
       className="absolute inset-0 pointer-events-none opacity-40"
       style={{
