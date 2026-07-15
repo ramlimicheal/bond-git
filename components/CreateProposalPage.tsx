@@ -317,6 +317,14 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
                     {/* AI Generate Button */}
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <button
+                            onClick={() => setFpOpen(true)}
+                            className="w-full py-3 mb-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        >
+                            <Icons.TrendingUp size={16} />
+                            Fair Price Check
+                        </button>
+                        <p className="text-xs text-gray-500 text-center mb-3">Live market rates from the web</p>
+                        <button
                             onClick={handleGenerateAIAgreement}
                             disabled={isGeneratingAI}
                             className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
