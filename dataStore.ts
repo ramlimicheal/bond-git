@@ -3,6 +3,21 @@ import { supabase } from './src/integrations/supabase/client';
 import { useOrg } from './org.context';
 import type { Client, Product, Quote, Proposal, Invoice } from './types';
 import { checkEntitlement, incrementUsage, type Meter } from './utils/entitlements';
+import { toast } from './components/Toast';
+
+// One-time listener: surface entitlement blocks as toasts without coupling
+// every create call site to the toast module.
+if (typeof window !== 'undefined' && !(window as any).__billentyEntitlementListener) {
+  (window as any).__billentyEntitlementListener = true;
+  window.addEventListener('billenty:entitlement-blocked', (e: any) => {
+    const d = e.detail || {};
+    const label = String(d.feature || 'this action').replace(/_/g, ' ');
+    const msg = d.reason === 'forbidden' ? 'Not authorised.'
+      : d.reason === 'no_subscription' ? 'No active subscription. Please choose a plan.'
+      : `Plan limit reached for ${label} (${d.used}/${d.limit}). Upgrade to continue.`;
+    toast.warning(msg);
+  });
+}
 
 // ============ MAPPERS ============
 const mapClient = (r: any): Client => ({
