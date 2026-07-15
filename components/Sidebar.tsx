@@ -3,6 +3,7 @@ import { useTheme } from '../theme.context';
 import { useAuth } from '../auth.context';
 import { Icons } from './Icon';
 import { Page } from '../types';
+import GithubSyncBadge from './GithubSyncBadge';
 
 interface SidebarProps {
   isOpen: boolean;
