@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../theme.context';
+import { useAuth } from '../auth.context';
 import { Icons } from './Icon';
 import { Page } from '../types';
 
@@ -14,6 +15,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
   const [salesOpen, setSalesOpen] = useState(true);
   const [legalOpen, setLegalOpen] = useState(true);
   const { theme, toggleTheme } = useTheme();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/';
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
+  };
 
   const handleNav = (page: Page) => {
     onNavigate(page);
@@ -212,12 +223,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          {user && (
+            <div className="mb-3 px-1">
+              <p className="text-[11px] text-gray-500 dark:text-gray-500 truncate" title={user.email ?? ''}>
+                {user.email}
+              </p>
+            </div>
+          )}
           <button
             onClick={toggleTheme}
             className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 dark:border-gray-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {theme === 'dark' ? <Icons.Sun size={16} /> : <Icons.Moon size={16} />}
             {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="mt-2 w-full flex items-center justify-center gap-2 py-2 px-4 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-md text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            <Icons.X size={16} />
+            Log out
           </button>
         </div>
       </aside>
