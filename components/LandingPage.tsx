@@ -322,9 +322,11 @@ const Pricing: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center">
           <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-            Simple pricing that grows with you
+            One recovered invoice pays for a year of Billenty
           </h2>
-          <p className="mt-5 text-neutral-500">No hidden fees. No per-invoice charges. Unlimited users.</p>
+          <p className="mt-5 text-neutral-500 max-w-2xl mx-auto">
+            No free tier. No per-invoice fees. Just two honest plans built for Indian design freelancers who are done chasing payments on WhatsApp.
+          </p>
           <div className="mt-8 inline-flex items-center gap-3 text-sm">
             <span className={yearly ? 'text-neutral-400' : 'text-neutral-900 font-medium'}>Monthly</span>
             <button
@@ -379,6 +381,21 @@ const Pricing: React.FC = () => {
             );
           })}
         </div>
+        <div className="mt-10 grid md:grid-cols-3 gap-4 text-sm">
+          {[
+            { t: 'Included in every plan', d: 'GST invoicing • Client portal login • UPI collection • Editorial PDFs • Bank-grade encryption • Indian data residency' },
+            { t: 'Pay-as-you-go add-ons', d: 'Lawyer-signed demand notice ₹1,999 • Section 138 memo ₹2,499 • Extra Fair Price Checks ₹49 each • White-label domain ₹499/mo' },
+            { t: '7-day money-back', d: 'If Billenty does not help you send cleaner proposals or recover a single overdue invoice in your first week, we refund every rupee. No questions.' },
+          ].map(x => (
+            <div key={x.t} className="bg-white rounded-2xl border border-neutral-200 p-5">
+              <div className="font-semibold text-neutral-900">{x.t}</div>
+              <div className="mt-2 text-neutral-600 leading-relaxed">{x.d}</div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-8 text-center text-xs text-neutral-500 max-w-2xl mx-auto">
+          Prices in INR, exclusive of 18% GST. Yearly billing saves 20%. Studio plan for small design agencies coming later this year — <a href="#contact" className="underline">join the waitlist</a>.
+        </p>
       </div>
     </section>
   );
