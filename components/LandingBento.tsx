@@ -73,21 +73,43 @@ const PricePill: React.FC<{ scope: string; low: string; high: string }> = ({ sco
   </div>
 );
 
+const MarqueeRow: React.FC<{ reverse?: boolean; duration: number; rows: typeof priceRows }> = ({
+  reverse = false,
+  duration,
+  rows,
+}) => (
+  <div className="relative flex overflow-hidden w-full [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+    <div
+      className="flex gap-3 pr-3 shrink-0 will-change-transform"
+      style={{
+        animation: `${reverse ? 'bento-marquee-rev' : 'bento-marquee'} ${duration}s linear infinite`,
+      }}
+    >
+      {rows.map((r, i) => (
+        <PricePill key={`x${i}`} {...r} />
+      ))}
+    </div>
+    <div
+      aria-hidden
+      className="flex gap-3 pr-3 shrink-0 will-change-transform"
+      style={{
+        animation: `${reverse ? 'bento-marquee-rev' : 'bento-marquee'} ${duration}s linear infinite`,
+      }}
+    >
+      {rows.map((r, i) => (
+        <PricePill key={`y${i}`} {...r} />
+      ))}
+    </div>
+  </div>
+);
+
 const FairPriceVisual: React.FC = () => (
   <div className="absolute inset-0 flex flex-col justify-center gap-3">
-    <div className="flex gap-3 animate-[bento-marquee_28s_linear_infinite]">
-      {[...priceRows, ...priceRows].map((r, i) => (
-        <PricePill key={`a${i}`} {...r} />
-      ))}
-    </div>
-    <div className="flex gap-3 animate-[bento-marquee-rev_32s_linear_infinite]">
-      {[...priceRows.slice().reverse(), ...priceRows.slice().reverse()].map((r, i) => (
-        <PricePill key={`b${i}`} {...r} />
-      ))}
-    </div>
-    <div className="absolute left-6 top-6 flex items-center gap-2 rounded-full bg-neutral-900 text-white px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase">
+    <div className="absolute left-6 top-6 z-10 flex items-center gap-2 rounded-full bg-neutral-900 text-white px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase shadow-sm">
       <Compass className="w-3 h-3" /> Live market rates
     </div>
+    <MarqueeRow duration={38} rows={priceRows} />
+    <MarqueeRow reverse duration={44} rows={priceRows.slice().reverse()} />
   </div>
 );
 
@@ -209,8 +231,8 @@ const SchedulerVisual: React.FC = () => (
 const LandingBento: React.FC = () => (
   <section className="py-24 px-6 bg-white">
     <style>{`
-      @keyframes bento-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-      @keyframes bento-marquee-rev { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+      @keyframes bento-marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+      @keyframes bento-marquee-rev { from { transform: translateX(-100%); } to { transform: translateX(0); } }
       @keyframes bento-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     `}</style>
     <div className="max-w-6xl mx-auto">
