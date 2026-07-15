@@ -326,7 +326,9 @@ const Features: React.FC = () => (
             <div className={`mt-8 grid gap-6 ${band.items.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
               {band.items.map((f) => (
                 <div key={f.title} className="p-6 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow flex flex-col">
-                  <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-4">{f.icon}</div>
+                  <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
+                    <f.icon className="w-5 h-5" strokeWidth={1.75} />
+                  </div>
                   <h4 className="font-display text-base font-semibold text-neutral-900 mb-2">{f.title}</h4>
                   <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
                 </div>
@@ -341,7 +343,7 @@ const Features: React.FC = () => (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {ALSO_INCLUDED.map((x) => (
             <div key={x.label} className="flex items-center gap-3 bg-[#faf9f4] rounded-xl px-4 py-3 text-sm text-neutral-800">
-              <span className="text-lg">{x.icon}</span>
+              <x.icon className="w-4 h-4 text-orange-600 shrink-0" strokeWidth={1.75} />
               <span>{x.label}</span>
             </div>
           ))}
