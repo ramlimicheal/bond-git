@@ -28,9 +28,63 @@ const STEPS = [
 ];
 
 const TESTIMONIALS = [
-  { quote: 'Billenty cut our overdue book by 60% in the first quarter. The legal notice flow alone paid for the platform.', name: 'Anjali Rao', role: 'Founder, Studio Kaari' },
-  { quote: 'Proposals used to eat my weekends. Now I ship a signed one before lunch.', name: 'Vikram Desai', role: 'Design Lead, Northline' },
-  { quote: 'The client portal feels like Stripe for studios. My clients actually pay on time now.', name: 'Priya Menon', role: 'Principal, Menon & Co.' },
+  {
+    quote: 'Billenty recovered ₹42L in overdue invoices in just 3 weeks. Our studio finally sleeps at night.',
+    name: 'Anjali Rao',
+    role: 'Founder, Studio Kaari',
+    img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=600&fit=crop',
+  },
+  {
+    quote: 'Used to chase invoices manually — pure stress. Now AI sends perfect reminders. Collections up 58%.',
+    name: 'Vikram Desai',
+    role: 'Design Lead, Northline',
+    img: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&h=600&fit=crop',
+  },
+  {
+    quote: 'The legal notice flow is unreal. One click, real lawyer, signed notice. Clients pay within 48 hours.',
+    name: 'Priya Menon',
+    role: 'Principal, Menon & Co.',
+    img: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop',
+  },
+];
+
+const PLANS = [
+  {
+    name: 'Starter',
+    price: '₹1,900',
+    per: '/mo',
+    tag: 'Perfect for solo freelancers just getting started.',
+    cta: 'Start 14-day free trial',
+    variant: 'outline' as const,
+    features: ['Up to 50 invoices / mo', 'GST-ready invoicing', 'Basic reminders', 'Client portal', 'Email support'],
+  },
+  {
+    name: 'Growth',
+    price: '₹4,900',
+    per: '/mo',
+    tag: 'Unlimited invoicing for growing studios.',
+    cta: 'Book a demo',
+    variant: 'primary' as const,
+    features: ['Unlimited invoices', 'AI proposals & quotes', 'Auto-drafted legal notices', 'UPI + card collection', 'Priority support'],
+  },
+  {
+    name: 'Business',
+    price: '₹9,900',
+    per: '/mo',
+    tag: 'For agencies with real recovery needs.',
+    cta: 'Talk to sales',
+    variant: 'dark' as const,
+    features: ['Everything in Growth', 'Lawyer marketplace', 'White-label client portal', 'Dedicated success manager', 'SOC 2 + 99.9% SLA'],
+  },
+];
+
+const FAQS = [
+  { q: 'How does Billenty\u2019s AI help me get paid faster?', a: 'Billenty drafts polished proposals, invoices and reminders automatically. It flags overdue invoices, escalates them to a signed legal notice, and reconciles UPI payments the moment they land.' },
+  { q: 'Does Billenty work for Indian businesses?', a: 'Billenty is built for India first. GSTIN, CGST/SGST/IGST split, HSN/SAC, place of supply, e-invoicing and UPI collection are native \u2014 not bolted on.' },
+  { q: 'Is Billenty easy to set up for non-techies?', a: 'Yes. Add your GSTIN, upload a logo, pick an accent colour and you can send your first branded invoice in under five minutes. No accounting jargon.' },
+  { q: 'Can I try Billenty for free?', a: 'Every plan starts with a 14-day free trial. No credit card required. You can send real invoices during the trial and cancel any time.' },
+  { q: 'What integrations does Billenty support?', a: 'Razorpay, UPI, Zoho Books, Tally, Google Drive, WhatsApp, Gmail and more \u2014 with an open API for anything custom.' },
+  { q: 'Is my data safe with Billenty?', a: 'End-to-end encrypted, hosted in Indian data centres, SOC 2 Type II ready, and every legal document is stored under attorney-client workflows.' },
 ];
 
 const Nav: React.FC = () => (
@@ -159,24 +213,140 @@ const HowItWorks: React.FC = () => (
 const Testimonials: React.FC = () => (
   <section className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
-      <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">Testimonials</p>
-      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-        Loved by <em className="italic">design studios</em>
-      </h2>
-      <div className="mt-14 grid md:grid-cols-3 gap-6">
+      <div className="text-center">
+        <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+          Our customer reviews
+        </h2>
+        <p className="mt-5 text-neutral-500 max-w-2xl mx-auto">
+          Studios handle 3\u00d7 the invoice volume with the same team, cut aged receivables by 92%, and close their books 12 days faster.
+        </p>
+      </div>
+      <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {TESTIMONIALS.map(t => (
-          <figure key={t.name} className="bg-neutral-50 border border-neutral-200 rounded-2xl p-8 flex flex-col justify-between">
-            <blockquote className="text-neutral-800 leading-relaxed">&ldquo;{t.quote}&rdquo;</blockquote>
-            <figcaption className="mt-6 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold">{t.name[0]}</div>
-              <div>
-                <div className="text-sm font-semibold text-neutral-900">{t.name}</div>
-                <div className="text-xs text-neutral-500">{t.role}</div>
-              </div>
+          <figure key={t.name} className="bg-[#faf9f4] rounded-3xl p-5 flex flex-col">
+            <div className="flex gap-4 items-start">
+              <img src={t.img} alt={t.name} className="w-40 h-48 object-cover rounded-2xl flex-shrink-0" loading="lazy" />
+              <blockquote className="text-neutral-900 leading-snug" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: '20px' }}>
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+            </div>
+            <figcaption className="mt-6 pt-4 border-t border-neutral-200/70">
+              <div className="text-sm font-semibold text-neutral-900">{t.name}</div>
+              <div className="text-xs text-neutral-500 mt-0.5">{t.role}</div>
             </figcaption>
           </figure>
         ))}
       </div>
+    </div>
+  </section>
+);
+
+const Pricing: React.FC = () => {
+  const [yearly, setYearly] = React.useState(false);
+  return (
+    <section id="pricing" className="py-24 px-6 bg-neutral-50">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center">
+          <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+            Simple pricing that grows with you
+          </h2>
+          <p className="mt-5 text-neutral-500">No hidden fees. No per-invoice charges. Unlimited users.</p>
+          <div className="mt-8 inline-flex items-center gap-3 text-sm">
+            <span className={yearly ? 'text-neutral-400' : 'text-neutral-900 font-medium'}>Monthly</span>
+            <button
+              onClick={() => setYearly(v => !v)}
+              className={`relative w-12 h-6 rounded-full transition-colors ${yearly ? 'bg-orange-500' : 'bg-neutral-300'}`}
+              aria-label="Toggle billing period"
+            >
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${yearly ? 'left-6' : 'left-0.5'}`} />
+            </button>
+            <span className={yearly ? 'text-neutral-900 font-medium' : 'text-neutral-400'}>Yearly</span>
+            <span className="ml-1 text-xs bg-neutral-200 text-neutral-700 rounded-full px-2 py-0.5">Save 20%</span>
+          </div>
+        </div>
+        <div className="mt-14 grid md:grid-cols-3 gap-6">
+          {PLANS.map(p => {
+            const price = yearly
+              ? '\u20b9' + Math.round(parseInt(p.price.replace(/[^0-9]/g, ''), 10) * 0.8).toLocaleString('en-IN')
+              : p.price;
+            const btn =
+              p.variant === 'primary'
+                ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                : p.variant === 'dark'
+                ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
+                : 'bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900';
+            return (
+              <div key={p.name} className="bg-[#faf9f4] rounded-3xl p-3">
+                <div className="text-center pt-8 pb-6 px-6">
+                  <h3 className="text-3xl text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>{p.name}</h3>
+                  <p className="mt-3 text-sm text-neutral-500 max-w-[240px] mx-auto">{p.tag}</p>
+                </div>
+                <div className="bg-white rounded-2xl p-6">
+                  <div className="text-center py-6">
+                    <span className="text-5xl text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>{price}</span>
+                    <span className="text-neutral-500 ml-1">{p.per}</span>
+                  </div>
+                  <Link to="/signup" className={`block text-center font-medium py-3 rounded-full transition-colors ${btn}`}>
+                    {p.cta}
+                  </Link>
+                  <div className="mt-8">
+                    <p className="text-sm font-semibold text-neutral-900 mb-4">Everything you need</p>
+                    <ul className="space-y-3">
+                      {p.features.map(f => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-neutral-700">
+                          <svg className="w-4 h-4 mt-0.5 text-neutral-900 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clipRule="evenodd" />
+                          </svg>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const FAQ: React.FC = () => {
+  const [open, setOpen] = React.useState<number | null>(0);
+  return (
+    <section id="faq" className="py-24 px-6 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center">
+          <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900 leading-[1.05]" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+            Got Questions? Don&rsquo;t worry,<br />we&rsquo;ve got the Answers.
+          </h2>
+          <p className="mt-5 text-neutral-500">Everything you need to know before getting started</p>
+        </div>
+        <div className="mt-14 grid md:grid-cols-2 gap-4">
+          {FAQS.map((f, i) => {
+            const isOpen = open === i;
+            return (
+              <button
+                key={i}
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="text-left bg-[#faf9f4] rounded-2xl p-5 flex items-start justify-between gap-4 hover:bg-[#f4f2eb] transition-colors"
+              >
+                <div>
+                  <div className="font-medium text-neutral-900">{f.q}</div>
+                  {isOpen && <div className="mt-3 text-sm text-neutral-600 leading-relaxed">{f.a}</div>}
+                </div>
+                <span className="w-8 h-8 rounded-lg bg-neutral-200 text-neutral-700 flex items-center justify-center flex-shrink-0 text-lg leading-none">
+                  {isOpen ? '\u2013' : '+'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
     </div>
   </section>
 );
@@ -253,6 +423,8 @@ export const LandingPage: React.FC = () => (
       <Features />
       <HowItWorks />
       <Testimonials />
+      <Pricing />
+      <FAQ />
       <CTA />
       <Footer />
     </main>
