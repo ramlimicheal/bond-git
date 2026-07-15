@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
             manualChunks: {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
               'supabase': ['@supabase/supabase-js', '@lovable.dev/cloud-auth-js'],
-              'pdf': ['html2canvas', 'jspdf', 'pdf-lib', 'qrcode'],
+              'pdf': ['pdf-lib', 'qrcode'],
               'icons': ['lucide-react'],
             },
           },
