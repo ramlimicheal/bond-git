@@ -51,40 +51,56 @@ const TESTIMONIALS = [
 const PLANS = [
   {
     name: 'Starter',
-    price: '₹1,900',
+    price: '₹499',
     per: '/mo',
-    tag: 'Perfect for solo freelancers just getting started.',
-    cta: 'Start 14-day free trial',
+    tag: 'For solo designers who want to look premium and get paid on time.',
+    cta: 'Get Starter',
     variant: 'outline' as const,
-    features: ['Up to 50 invoices / mo', 'GST-ready invoicing', 'Basic reminders', 'Client portal', 'Email support'],
+    features: [
+      'Up to 25 GST-ready invoices / month',
+      'Up to 10 AI proposals & quotes / month',
+      '10 Fair Price Checks / month (Firecrawl-powered market rates)',
+      'Branded client portal — view, e-sign, pay via UPI',
+      'Automated payment reminders (Email + WhatsApp)',
+      '1 auto-drafted legal demand notice / month',
+      'Editorial PDF templates with your logo & accent',
+      'Email support (24h response)',
+    ],
   },
   {
-    name: 'Growth',
-    price: '₹4,900',
+    name: 'Pro',
+    price: '₹1,499',
     per: '/mo',
-    tag: 'Unlimited invoicing for growing studios.',
-    cta: 'Book a demo',
+    tag: 'For serious freelancers and contract designers who mean business.',
+    cta: 'Go Pro',
     variant: 'primary' as const,
-    features: ['Unlimited invoices', 'AI proposals & quotes', 'Auto-drafted legal notices', 'UPI + card collection', 'Priority support'],
-  },
-  {
-    name: 'Business',
-    price: '₹9,900',
-    per: '/mo',
-    tag: 'For agencies with real recovery needs.',
-    cta: 'Talk to sales',
-    variant: 'dark' as const,
-    features: ['Everything in Growth', 'Lawyer marketplace', 'White-label client portal', 'Dedicated success manager', 'SOC 2 + 99.9% SLA'],
+    features: [
+      'Unlimited GST invoices, quotes & proposals',
+      'Unlimited AI proposal drafting & scope-lock clauses',
+      'Unlimited Fair Price Checks with cited market sources',
+      'Milestone-gated client portal (files unlock on payment)',
+      'Auto-escalation: reminder → demand notice → lawyer',
+      'Live Lawyer Marketplace access (pay-per-notice add-on)',
+      'Payment Health Score on every client',
+      'GSTR-1 export, TDS handling, place-of-supply automation',
+      'Razorpay / UPI / cards / net banking — auto-reconciled',
+      'White-label PDFs & portal (remove Billenty branding)',
+      'Priority support (chat, 4h response)',
+    ],
   },
 ];
 
 const FAQS = [
-  { q: 'How does Billenty\u2019s AI help me get paid faster?', a: 'Billenty drafts polished proposals, invoices and reminders automatically. It flags overdue invoices, escalates them to a signed legal notice, and reconciles UPI payments the moment they land.' },
-  { q: 'Does Billenty work for Indian businesses?', a: 'Billenty is built for India first. GSTIN, CGST/SGST/IGST split, HSN/SAC, place of supply, e-invoicing and UPI collection are native \u2014 not bolted on.' },
-  { q: 'Is Billenty easy to set up for non-techies?', a: 'Yes. Add your GSTIN, upload a logo, pick an accent colour and you can send your first branded invoice in under five minutes. No accounting jargon.' },
-  { q: 'Can I try Billenty for free?', a: 'Every plan starts with a 14-day free trial. No credit card required. You can send real invoices during the trial and cancel any time.' },
-  { q: 'What integrations does Billenty support?', a: 'Razorpay, UPI, Zoho Books, Tally, Google Drive, WhatsApp, Gmail and more \u2014 with an open API for anything custom.' },
-  { q: 'Is my data safe with Billenty?', a: 'End-to-end encrypted, hosted in Indian data centres, SOC 2 Type II ready, and every legal document is stored under attorney-client workflows.' },
+  { q: 'Who exactly is Billenty for?', a: 'Billenty is built for Indian design freelancers and contract consultants — graphic designers, motion designers, brand studios, UI/UX designers, illustrators and multimedia creators. It is not a generic invoice tool. Every workflow, template and legal clause is tuned for how design work is scoped, delivered and paid for in India.' },
+  { q: 'What is the Fair Price Engine and why does it matter?', a: 'Most freelancers underprice because they negotiate on WhatsApp with no data. The Fair Price Engine crawls real market rates from Behance briefs, Upwork proposals, agency rate cards and design communities, then returns a defensible low / median / high range with cited sources — auto-inserted into your proposal PDF. Clients stop haggling because they can see the market, not just your quote.' },
+  { q: 'How does the legal recovery actually work?', a: 'Every overdue invoice becomes an auto-drafted, India-specific demand notice — Section 138 memos, arbitration references, GST-attached breakdowns. You can send it yourself, or escalate to a real empanelled lawyer from our marketplace who signs and dispatches it on their letterhead. Most silent clients pay within 48–72 hours of a signed notice.' },
+  { q: 'What is the milestone-gated client portal?', a: 'Legal is the stick; withheld files are the daily leverage. Your client sees the project, deliverables and invoices in a branded portal — but the next milestone\u2019s files stay locked until the previous milestone is paid. No more sending Figma links, then chasing money.' },
+  { q: 'Is Billenty really GST- and India-compliant?', a: 'Yes — India first, not bolted on. GSTIN validation, CGST/SGST/IGST split, HSN/SAC codes, place-of-supply logic, TDS deduction handling, e-invoicing readiness, GSTR-1 export, INR-only pricing and UPI collection are all native.' },
+  { q: 'Is there a free trial?', a: 'No. Billenty is a paid tool from day one — starting at ₹499/month — because it is designed to earn you back many multiples of that in a single recovered invoice. There is a 7-day money-back guarantee if it does not work for you.' },
+  { q: 'What is the difference between Starter and Pro?', a: 'Starter (₹499) is for solo designers with a handful of active clients — 25 invoices, 10 AI proposals, 10 Fair Price Checks and 1 legal notice per month. Pro (₹1,499) removes every limit, unlocks milestone-gated file delivery, Payment Health Scores, the Lawyer Marketplace and white-label PDFs. Most working freelancers upgrade to Pro within the first month.' },
+  { q: 'Can my clients also log in?', a: 'Yes. Every client gets a free, branded portal login to view proposals, e-sign, download invoices, pay via UPI/cards and see milestone status. They never need a Billenty account of their own.' },
+  { q: 'Do you support agencies and larger studios?', a: 'Not yet. Billenty is intentionally single-operator first. A multi-seat Studio plan for small design agencies is on the roadmap for later this year — join the waitlist from the footer.' },
+  { q: 'Is my data safe?', a: 'End-to-end encrypted in transit and at rest, hosted on Indian-region infrastructure, row-level tenant isolation, and every legal document is stored under an attorney-client workflow with audit logs.' },
 ];
 
 const NAV_TOP_OFFSET = 25;
@@ -306,9 +322,11 @@ const Pricing: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center">
           <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-            Simple pricing that grows with you
+            One recovered invoice pays for a year of Billenty
           </h2>
-          <p className="mt-5 text-neutral-500">No hidden fees. No per-invoice charges. Unlimited users.</p>
+          <p className="mt-5 text-neutral-500 max-w-2xl mx-auto">
+            No free tier. No per-invoice fees. Just two honest plans built for Indian design freelancers who are done chasing payments on WhatsApp.
+          </p>
           <div className="mt-8 inline-flex items-center gap-3 text-sm">
             <span className={yearly ? 'text-neutral-400' : 'text-neutral-900 font-medium'}>Monthly</span>
             <button
@@ -322,7 +340,7 @@ const Pricing: React.FC = () => {
             <span className="ml-1 text-xs bg-neutral-200 text-neutral-700 rounded-full px-2 py-0.5">Save 20%</span>
           </div>
         </div>
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
+        <div className="mt-14 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {PLANS.map(p => {
             const price = yearly
               ? '\u20b9' + Math.round(parseInt(p.price.replace(/[^0-9]/g, ''), 10) * 0.8).toLocaleString('en-IN')
@@ -330,8 +348,6 @@ const Pricing: React.FC = () => {
             const btn =
               p.variant === 'primary'
                 ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                : p.variant === 'dark'
-                ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
                 : 'bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900';
             return (
               <div key={p.name} className="bg-[#faf9f4] rounded-3xl p-3">
@@ -365,6 +381,21 @@ const Pricing: React.FC = () => {
             );
           })}
         </div>
+        <div className="mt-10 grid md:grid-cols-3 gap-4 text-sm">
+          {[
+            { t: 'Included in every plan', d: 'GST invoicing • Client portal login • UPI collection • Editorial PDFs • Bank-grade encryption • Indian data residency' },
+            { t: 'Pay-as-you-go add-ons', d: 'Lawyer-signed demand notice ₹1,999 • Section 138 memo ₹2,499 • Extra Fair Price Checks ₹49 each • White-label domain ₹499/mo' },
+            { t: '7-day money-back', d: 'If Billenty does not help you send cleaner proposals or recover a single overdue invoice in your first week, we refund every rupee. No questions.' },
+          ].map(x => (
+            <div key={x.t} className="bg-white rounded-2xl border border-neutral-200 p-5">
+              <div className="font-semibold text-neutral-900">{x.t}</div>
+              <div className="mt-2 text-neutral-600 leading-relaxed">{x.d}</div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-8 text-center text-xs text-neutral-500 max-w-2xl mx-auto">
+          Prices in INR, exclusive of 18% GST. Yearly billing saves 20%. Studio plan for small design agencies coming later this year — <a href="#contact" className="underline">join the waitlist</a>.
+        </p>
       </div>
     </section>
   );
