@@ -585,6 +585,7 @@ export const LandingPage: React.FC = () => (
       <LogoMarquee />
       <DashboardShowcase />
       <Features />
+      <LandingBento />
       <HowItWorks />
       <Testimonials />
       <Pricing />
