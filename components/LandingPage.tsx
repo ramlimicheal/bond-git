@@ -1,5 +1,27 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Compass,
+  Sparkles,
+  Lock,
+  Receipt,
+  DoorClosed,
+  CreditCard,
+  Clock,
+  Scale,
+  Gavel,
+  Activity,
+  Bot,
+  LineChart,
+  FolderKanban,
+  Palette,
+  Users,
+  Command,
+  Rocket,
+  Briefcase,
+  ShieldCheck,
+  type LucideIcon,
+} from 'lucide-react';
 import dashboardImg from '../src/assets/landing-dashboard.jpg';
 
 const NAV = [
@@ -18,9 +40,9 @@ const FEATURE_BANDS = [
     title: 'Stop underpricing on WhatsApp',
     desc: 'Walk into every conversation with real market data, tight scope and a proposal that closes itself.',
     items: [
-      { icon: '🧭', title: 'Fair Price Engine', desc: 'Firecrawl-powered market intelligence. Type your scope — get a defensible low / median / high range with cited sources from Behance, Upwork, agency rate cards and design communities. Auto-inserted into your proposal PDF.' },
-      { icon: '✨', title: 'AI Proposals & Quotes', desc: 'Studio-grade proposals in under 60 seconds. AI drafts scope, deliverables, timeline and terms — you approve and send. Every proposal is signable in the client portal.' },
-      { icon: '🔒', title: 'Scope-Lock Clauses', desc: 'Auto-generated "what\u2019s included, what\u2019s not, revision limits" clauses on every proposal. 80% of freelancer disputes are scope creep, not bad clients. Kill them before they start.' },
+      { icon: Compass, title: 'Fair Price Engine', desc: 'Firecrawl-powered market intelligence. Type your scope — get a defensible low / median / high range with cited sources from Behance, Upwork, agency rate cards and design communities. Auto-inserted into your proposal PDF.' },
+      { icon: Sparkles, title: 'AI Proposals & Quotes', desc: 'Studio-grade proposals in under 60 seconds. AI drafts scope, deliverables, timeline and terms — you approve and send. Every proposal is signable in the client portal.' },
+      { icon: Lock, title: 'Scope-Lock Clauses', desc: 'Auto-generated "what\u2019s included, what\u2019s not, revision limits" clauses on every proposal. 80% of freelancer disputes are scope creep, not bad clients. Kill them before they start.' },
     ],
   },
   {
@@ -28,10 +50,10 @@ const FEATURE_BANDS = [
     title: 'Money in the bank, not in your inbox',
     desc: 'Invoicing, portal, payments and reconciliation — one workflow, zero spreadsheets.',
     items: [
-      { icon: '🧾', title: 'GST-Ready Invoicing', desc: 'CGST / SGST / IGST split automatically. GSTIN validation, HSN / SAC codes, place of supply, TDS handling and e-invoicing readiness — all native to India.' },
-      { icon: '🚪', title: 'Milestone-Gated Client Portal', desc: 'Your client sees the project, deliverables and invoices in a branded portal — but the next milestone\u2019s files stay locked until the previous one is paid. Withheld files are your daily leverage.' },
-      { icon: '💳', title: 'UPI, Cards & Auto-Reconciliation', desc: 'Collect via UPI, Razorpay, cards and net banking. Payments auto-match to invoices the moment they land. No more end-of-month spreadsheet nights.' },
-      { icon: '⏰', title: 'Smart Reminder Engine', desc: 'Polite → firm → final. Email + WhatsApp reminders on your schedule, in your voice, escalating automatically until the invoice is paid.' },
+      { icon: Receipt, title: 'GST-Ready Invoicing', desc: 'CGST / SGST / IGST split automatically. GSTIN validation, HSN / SAC codes, place of supply, TDS handling and e-invoicing readiness — all native to India.' },
+      { icon: DoorClosed, title: 'Milestone-Gated Client Portal', desc: 'Your client sees the project, deliverables and invoices in a branded portal — but the next milestone\u2019s files stay locked until the previous one is paid. Withheld files are your daily leverage.' },
+      { icon: CreditCard, title: 'UPI, Cards & Auto-Reconciliation', desc: 'Collect via UPI, Razorpay, cards and net banking. Payments auto-match to invoices the moment they land. No more end-of-month spreadsheet nights.' },
+      { icon: Clock, title: 'Smart Reminder Engine', desc: 'Polite → firm → final. Email + WhatsApp reminders on your schedule, in your voice, escalating automatically until the invoice is paid.' },
     ],
   },
   {
@@ -39,24 +61,24 @@ const FEATURE_BANDS = [
     title: 'The legal backbone Indian freelancers never had',
     desc: 'Auto-drafted notices, real lawyers on tap, and a payment risk score for every client.',
     items: [
-      { icon: '⚖️', title: 'Auto-Drafted Legal Notices', desc: 'Every overdue invoice becomes an India-specific demand notice — Section 138 memos, arbitration references, GST-attached breakdowns. Ready to send in one click.' },
-      { icon: '👩\u200d⚖️', title: 'Lawyer Marketplace', desc: 'Empanelled Indian lawyers sign and dispatch your notice on their letterhead. Most silent clients pay within 48\u201372 hours of a signed notice.' },
-      { icon: '📊', title: 'Payment Health Score', desc: 'After 2\u20133 invoices with a client, we surface avg days-to-pay, dispute rate and red flags — so you can price risk into future quotes.' },
-      { icon: '🤖', title: 'Auto-Notice Scheduler', desc: 'Set it once. Overdue → reminder → notice → lawyer, running while you sleep. You only step in when there\u2019s a decision to make.' },
+      { icon: Scale, title: 'Auto-Drafted Legal Notices', desc: 'Every overdue invoice becomes an India-specific demand notice — Section 138 memos, arbitration references, GST-attached breakdowns. Ready to send in one click.' },
+      { icon: Gavel, title: 'Lawyer Marketplace', desc: 'Empanelled Indian lawyers sign and dispatch your notice on their letterhead. Most silent clients pay within 48\u201372 hours of a signed notice.' },
+      { icon: Activity, title: 'Payment Health Score', desc: 'After 2\u20133 invoices with a client, we surface avg days-to-pay, dispute rate and red flags — so you can price risk into future quotes.' },
+      { icon: Bot, title: 'Auto-Notice Scheduler', desc: 'Set it once. Overdue → reminder → notice → lawyer, running while you sleep. You only step in when there\u2019s a decision to make.' },
     ],
   },
-];
+] satisfies Array<{ kicker: string; title: string; desc: string; items: Array<{ icon: LucideIcon; title: string; desc: string }> }>;
 
 const ALSO_INCLUDED = [
-  { icon: '📈', label: 'Sales & Dashboard Analytics' },
-  { icon: '🗂️', label: 'GSTR-1 & TDS Reports' },
-  { icon: '🎨', label: 'White-Label Editorial PDFs' },
-  { icon: '👥', label: 'Client & Product CRM' },
-  { icon: '⌘', label: 'Command Palette (⌘K)' },
-  { icon: '🚀', label: 'Freelancer / Agency Onboarding' },
-  { icon: '🧑\u200d💼', label: 'Lawyer Portal' },
-  { icon: '🔐', label: 'India-region hosting & audit logs' },
-];
+  { icon: LineChart, label: 'Sales & Dashboard Analytics' },
+  { icon: FolderKanban, label: 'GSTR-1 & TDS Reports' },
+  { icon: Palette, label: 'White-Label Editorial PDFs' },
+  { icon: Users, label: 'Client & Product CRM' },
+  { icon: Command, label: 'Command Palette (⌘K)' },
+  { icon: Rocket, label: 'Freelancer / Agency Onboarding' },
+  { icon: Briefcase, label: 'Lawyer Portal' },
+  { icon: ShieldCheck, label: 'India-region hosting & audit logs' },
+] satisfies Array<{ icon: LucideIcon; label: string }>;
 
 const STEPS = [
   { n: '01', title: 'Set up your studio', desc: 'Add GSTIN, upload your logo, pick a brand accent. Your PDFs go premium in minutes.' },
