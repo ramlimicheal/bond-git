@@ -212,7 +212,7 @@ function AppContent() {
     })();
 
     return (
-        <div className="flex h-screen bg-[#EAEAEA] overflow-hidden">
+        <div className="flex h-screen bg-[#EDEBE4] overflow-hidden">
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -220,8 +220,8 @@ function AppContent() {
                 onNavigate={handleNavigate}
             />
 
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAFAFA]">
-                <header className="h-[60px] bg-white border-b border-[#E5E5E5] flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-10">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9F4]">
+                <header className="h-[60px] bg-[#FAF9F4]/90 backdrop-blur border-b border-[#E8E4D8] flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}

@@ -10,7 +10,7 @@ const fmtINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
 /* --- Small primitives matching the Spark Pixel reference --- */
 const Card: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
-  <div className={`bg-white border border-[#E5E5E5] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] ${className}`}>
+  <div className={`bg-white border border-[#E8E4D8] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] ${className}`}>
     {children}
   </div>
 );
@@ -95,21 +95,21 @@ export const DashboardPage: React.FC = () => {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[24px] font-semibold text-[#0F172A] tracking-tight">
-          Welcome back, <span className="capitalize">{firstName}</span>
+        <h1 className="text-[34px] leading-[1.05] tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+          Welcome back, <span className="capitalize italic">{firstName}</span>
         </h1>
         <div className="flex items-center gap-2">
           <div className="relative">
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="appearance-none bg-white border border-[#E5E5E5] text-[#0F172A] py-1.5 pl-3 pr-8 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-1 focus:ring-gray-300"
+              className="appearance-none bg-white border border-[#E8E4D8] text-[#0F172A] py-1.5 pl-3 pr-8 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-1 focus:ring-neutral-300"
             >
               <option>Weekly</option><option>Monthly</option><option>Yearly</option>
             </select>
             <Icons.ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
           </div>
-          <button className="flex items-center gap-2 bg-white border border-[#E5E5E5] text-[#0F172A] py-1.5 px-3 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-gray-50">
+          <button className="flex items-center gap-2 bg-white border border-[#E8E4D8] text-[#0F172A] py-1.5 px-3 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#faf9f4]">
             <Icons.Calendar size={14} className="text-gray-400" />
             {today}
           </button>

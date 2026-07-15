@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
       <aside
         className={`fixed md:static inset-y-0 left-0 z-50 w-[248px] shrink-0 h-full
           flex flex-col justify-between py-4 px-3
-          bg-[#F2F2F2] border-r border-[#E5E5E5]
+          bg-[#F1EFE8] border-r border-[#E8E4D8]
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
