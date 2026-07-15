@@ -87,9 +87,29 @@ const FAQS = [
   { q: 'Is my data safe with Billenty?', a: 'End-to-end encrypted, hosted in Indian data centres, SOC 2 Type II ready, and every legal document is stored under attorney-client workflows.' },
 ];
 
-const Nav: React.FC = () => (
+const NAV_TOP_OFFSET = 25;
+const HERO_GAP = 80;
+
+const Nav: React.FC = () => {
+  const ref = React.useRef<HTMLElement | null>(null);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const apply = () => {
+      const h = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--nav-h', `${h}px`);
+      document.documentElement.style.setProperty('--nav-top', `${NAV_TOP_OFFSET}px`);
+      document.documentElement.style.setProperty('--hero-gap', `${HERO_GAP}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    window.addEventListener('resize', apply);
+    return () => { ro.disconnect(); window.removeEventListener('resize', apply); };
+  }, []);
+  return (
   <div className="sticky top-[25px] z-40 max-w-[1400px] mx-4 md:mx-auto">
-    <header className="bg-white border border-neutral-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <header ref={ref} className="bg-white border border-neutral-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="h-[72px] pl-6 pr-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[12px] font-bold">B</div>
@@ -104,10 +124,14 @@ const Nav: React.FC = () => (
       </div>
     </header>
   </div>
-);
+  );
+};
 
 const Hero: React.FC = () => (
-  <section className="relative pb-24 px-6" style={{ paddingTop: 'clamp(140px, 12vw, 200px)' }}>
+  <section
+    className="relative pb-24 px-6"
+    style={{ paddingTop: 'calc(var(--nav-top, 25px) + var(--nav-h, 72px) + var(--hero-gap, 80px))' }}
+  >
     <div
       className="absolute inset-0 pointer-events-none opacity-40"
       style={{
