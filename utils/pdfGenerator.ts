@@ -159,22 +159,34 @@ function fmtDate(s: string | null | undefined) {
 // ============ Editorial masthead ============
 // Kind: "INVOICE" / "QUOTE" / "PROPOSAL" — set as tiny caps eyebrow.
 // The document NUMBER is the typographic hero.
-function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string, number: string) {
+function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string, number: string, logo: PDFImage | null = null) {
   const top = PAGE_H - MARGIN;
 
-  // Left: monogram + wordmark
-  const monoSize = 22;
-  page.drawRectangle({ x: MARGIN, y: top - monoSize, width: monoSize, height: monoSize, color: COLORS.ink });
-  drawText(page, 'B', MARGIN + 6.5, top - monoSize + 5.5, { font: fonts.bold, size: 14, color: COLORS.paper });
-  drawText(page, (org.name || 'Your Company').toUpperCase(), MARGIN + monoSize + 10, top - 12, { font: fonts.bold, size: 10 });
-  drawText(page, org.legal_name || 'Independent Studio', MARGIN + monoSize + 10, top - 22, { font: fonts.regular, size: 8, color: COLORS.muted });
+  // Left: logo (if uploaded) or monogram, plus wordmark
+  const monoSize = 26;
+  if (logo) {
+    // Scale to fit within monoSize box while preserving aspect ratio.
+    const scale = Math.min(monoSize / logo.width, monoSize / logo.height);
+    const w = logo.width * scale;
+    const h = logo.height * scale;
+    page.drawImage(logo, { x: MARGIN, y: top - monoSize + (monoSize - h) / 2, width: w, height: h });
+  } else {
+    const m = 22;
+    page.drawRectangle({ x: MARGIN, y: top - m, width: m, height: m, color: COLORS.ink });
+    drawText(page, (org.name || 'B').charAt(0).toUpperCase(), MARGIN + 6.5, top - m + 5.5, { font: fonts.bold, size: 14, color: COLORS.paper });
+  }
+  const wordX = MARGIN + monoSize + 10;
+  drawText(page, (org.name || 'Your Company').toUpperCase(), wordX, top - 12, { font: fonts.bold, size: 10 });
+  drawText(page, org.legal_name || 'Independent Studio', wordX, top - 22, { font: fonts.regular, size: 8, color: COLORS.muted });
 
   // Right: eyebrow + number hero
-  drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.muted, 2.2);
+  drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.accent, 2.2);
   drawText(page, `No. ${number}`, PAGE_W - MARGIN - 90, top - 22, { font: fonts.regular, size: 10, color: COLORS.ink });
 
   // Full-width hairline under masthead
   drawLine(page, MARGIN, top - 36, PAGE_W - MARGIN, top - 36, COLORS.hairStrong, 0.8);
+  // Accent rule directly beneath the strong rule — the branded touch.
+  drawLine(page, MARGIN, top - 38, MARGIN + 60, top - 38, COLORS.accent, 1.5);
 }
 
 function drawFooter(page: PDFPage, fonts: any, pageNum = 1, total = 1) {
