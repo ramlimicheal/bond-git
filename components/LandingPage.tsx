@@ -410,7 +410,7 @@ const Footer: React.FC = () => (
 );
 
 export const LandingPage: React.FC = () => (
-  <div className="min-h-screen bg-neutral-100 text-neutral-900 font-sans pt-4">
+  <div className="landing-light min-h-screen bg-neutral-100 text-neutral-900 font-sans pt-4">
     <Nav />
     <main className="mt-2 bg-white rounded-t-[2.5rem] overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
       <Hero />
