@@ -88,8 +88,8 @@ const FAQS = [
 ];
 
 const Nav: React.FC = () => (
-  <div className="sticky top-3 z-40 px-3">
-    <header className="bg-white border border-neutral-200 rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+  <div className="sticky top-3 z-40 max-w-[1400px] mx-4 md:mx-auto">
+    <header className="bg-white border border-neutral-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="h-[72px] pl-6 pr-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[12px] font-bold">B</div>
@@ -412,7 +412,7 @@ const Footer: React.FC = () => (
 export const LandingPage: React.FC = () => (
   <div className="landing-light min-h-screen bg-neutral-100 text-neutral-900 font-sans pt-4">
     <Nav />
-    <main className="mt-2 bg-white rounded-t-[2.5rem] overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
+    <main className="mt-2 bg-white rounded-t-xl overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
       <Hero />
       <LogoMarquee />
       <DashboardShowcase />
