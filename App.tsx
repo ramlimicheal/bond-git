@@ -202,8 +202,17 @@ function AppContent() {
         }
     };
 
+    // Breadcrumb from path
+    const crumbs = (() => {
+        const p = location.pathname.split('/').filter(Boolean);
+        if (p.length === 0) return ['Dashboard', 'Overview'];
+        const first = p[0].charAt(0).toUpperCase() + p[0].slice(1);
+        const second = p[1] ? (isNaN(Number(p[1])) ? p[1].charAt(0).toUpperCase() + p[1].slice(1) : 'Details') : 'Overview';
+        return [first, second];
+    })();
+
     return (
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        <div className="flex h-screen bg-[#EAEAEA] overflow-hidden">
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -211,30 +220,46 @@ function AppContent() {
                 onNavigate={handleNavigate}
             />
 
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-16 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-8 flex-shrink-0">
-                    <div className="flex items-center gap-4 flex-1">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAFAFA]">
+                <header className="h-[60px] bg-white border-b border-[#E5E5E5] flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-10">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
                             className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         </button>
-                        <div className="relative max-w-md w-full">
-                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </span>
+                        <div className="flex items-center text-sm text-[#808080]">
+                            <span>{crumbs[0]}</span>
+                            <svg className="w-3 h-3 mx-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                            <span className="font-semibold text-[#0F172A] capitalize">{crumbs[1]}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative hidden md:block">
+                            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                             <input
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                                placeholder="Search anything..."
+                                className="pl-9 pr-14 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md w-[260px] focus:outline-none focus:ring-1 focus:ring-gray-300 placeholder-gray-400 text-[#0F172A]"
+                                placeholder="Search invoices, clients…"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 pointer-events-none">
+                                <kbd className="px-1.5 py-0.5 text-[10px] bg-white border border-gray-200 rounded text-gray-500">⌘</kbd>
+                                <kbd className="px-1.5 py-0.5 text-[10px] bg-white border border-gray-200 rounded text-gray-500">K</kbd>
+                            </div>
                         </div>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 relative" title="Notifications">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" />
+                        </button>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500" title="Inbox">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+                        </button>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-8">
+                <main className="flex-1 overflow-y-auto p-6">
                     <Routes>
                         <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/sales" element={<SalesOverviewPage />} />
