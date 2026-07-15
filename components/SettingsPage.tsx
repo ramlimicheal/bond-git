@@ -286,7 +286,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                     </button>
                   );
                 })}
-              </div>
+              </nav>
             </div>
           ))}
         </div>
