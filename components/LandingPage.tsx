@@ -155,19 +155,7 @@ const LogoMarquee: React.FC = () => (
   </section>
 );
 
-const DashboardShowcase: React.FC = () => (
-  <section className="relative py-24 px-6 bg-neutral-50">
-    <div className="max-w-6xl mx-auto">
-      <img
-        src={dashboardImg}
-        alt="Billenty dashboard preview"
-        width={1600}
-        height={1104}
-        className="w-full rounded-3xl shadow-2xl"
-      />
-    </div>
-  </section>
-);
+const DashboardShowcase: React.FC = () => null;
 
 const Features: React.FC = () => (
   <section id="features" className="py-24 px-6 bg-white">
