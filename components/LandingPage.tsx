@@ -88,7 +88,7 @@ const FAQS = [
 ];
 
 const NAV_TOP_OFFSET = 25;
-const HERO_GAP = 96;
+const HERO_BAND_GAP = 24;
 
 const Nav: React.FC = () => {
   const ref = React.useRef<HTMLElement | null>(null);
@@ -99,7 +99,7 @@ const Nav: React.FC = () => {
       const h = el.getBoundingClientRect().height;
       document.documentElement.style.setProperty('--nav-h', `${h}px`);
       document.documentElement.style.setProperty('--nav-top', `${NAV_TOP_OFFSET}px`);
-      document.documentElement.style.setProperty('--hero-gap', `${HERO_GAP}px`);
+      document.documentElement.style.setProperty('--hero-band-gap', `${HERO_BAND_GAP}px`);
     };
     apply();
     const ro = new ResizeObserver(apply);
@@ -108,7 +108,8 @@ const Nav: React.FC = () => {
     return () => { ro.disconnect(); window.removeEventListener('resize', apply); };
   }, []);
   return (
-  <div className="sticky top-[25px] z-40 max-w-[1400px] mx-4 md:mx-auto">
+  <div className="sticky top-0 z-40 bg-neutral-100 pt-[25px] pb-6">
+    <div className="max-w-[1400px] mx-4 md:mx-auto">
     <header ref={ref} className="bg-white border border-neutral-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="h-[72px] pl-6 pr-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
@@ -123,6 +124,7 @@ const Nav: React.FC = () => {
         </Link>
       </div>
     </header>
+    </div>
   </div>
   );
 };
@@ -130,7 +132,7 @@ const Nav: React.FC = () => {
 const Hero: React.FC = () => (
   <section
     className="relative pb-24 px-6"
-    style={{ paddingTop: 'calc(var(--nav-top, 25px) + var(--nav-h, 72px) + var(--hero-gap, 80px))' }}
+    style={{ paddingTop: 'clamp(72px, 8vw, 112px)' }}
   >
     <div
       className="absolute inset-0 pointer-events-none opacity-40"
@@ -422,9 +424,9 @@ const Footer: React.FC = () => (
 );
 
 export const LandingPage: React.FC = () => (
-  <div className="landing-light min-h-screen bg-neutral-100 text-neutral-900 font-sans pt-4">
+  <div className="landing-light min-h-screen bg-neutral-100 text-neutral-900 font-sans">
     <Nav />
-    <main className="mt-2 bg-white rounded-t-xl overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
+    <main className="bg-white rounded-t-xl overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
       <Hero />
       <LogoMarquee />
       <DashboardShowcase />
