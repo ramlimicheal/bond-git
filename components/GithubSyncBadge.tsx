@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Icons } from './Icon';
 
 const REPO = 'ramlimicheal/bond-git';
 const API = `https://api.github.com/repos/${REPO}/commits?per_page=1`;
@@ -65,7 +64,7 @@ export const GithubSyncBadge: React.FC = () => {
             className="text-[10px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
             title="Refresh"
           >
-            <Icons.RefreshCw size={11} />
+            ↻
           </button>
         </div>
         {commit ? (
