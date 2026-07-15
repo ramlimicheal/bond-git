@@ -115,7 +115,7 @@ export const ActionQueue: React.FC = () => {
   }, [invoices, quotes, proposals, navigate]);
 
   return (
-    <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5">
+    <div className="bg-white border border-[#E8E4D8] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5">
       <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-[11px] font-semibold text-[#808080] tracking-wider uppercase">Action Queue</h2>
@@ -141,7 +141,7 @@ export const ActionQueue: React.FC = () => {
           {actions.map(a => (
             <div key={a.id} className="flex items-center gap-3 py-3 group">
               <span className={`w-1 h-8 rounded-full ${priorityStyle[a.priority]}`} />
-              <span className="w-7 h-7 rounded-md bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-md bg-[#faf9f4] border border-[#EFEBDE] flex items-center justify-center shrink-0">
                 {a.icon}
               </span>
               <div className="flex-1 min-w-0">
