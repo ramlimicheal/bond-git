@@ -223,6 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          <GithubSyncBadge />
           {user && (
             <div className="mb-3 px-1">
               <p className="text-[11px] text-gray-500 dark:text-gray-500 truncate" title={user.email ?? ''}>
