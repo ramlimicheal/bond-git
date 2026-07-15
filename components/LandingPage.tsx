@@ -12,17 +12,10 @@ import {
   Gavel,
   Activity,
   Bot,
-  LineChart,
-  FolderKanban,
-  Palette,
-  Users,
-  Command,
-  Rocket,
-  Briefcase,
-  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import dashboardImg from '../src/assets/landing-dashboard.jpg';
+import LandingBento from './LandingBento';
 
 const NAV = [
   { label: 'Features', href: '#features' },
@@ -68,17 +61,6 @@ const FEATURE_BANDS = [
     ],
   },
 ] satisfies Array<{ kicker: string; title: string; desc: string; items: Array<{ icon: LucideIcon; title: string; desc: string }> }>;
-
-const ALSO_INCLUDED = [
-  { icon: LineChart, label: 'Sales & Dashboard Analytics' },
-  { icon: FolderKanban, label: 'GSTR-1 & TDS Reports' },
-  { icon: Palette, label: 'White-Label Editorial PDFs' },
-  { icon: Users, label: 'Client & Product CRM' },
-  { icon: Command, label: 'Command Palette (⌘K)' },
-  { icon: Rocket, label: 'Freelancer / Agency Onboarding' },
-  { icon: Briefcase, label: 'Lawyer Portal' },
-  { icon: ShieldCheck, label: 'India-region hosting & audit logs' },
-] satisfies Array<{ icon: LucideIcon; label: string }>;
 
 const STEPS = [
   { n: '01', title: 'Set up your studio', desc: 'Add GSTIN, upload your logo, pick a brand accent. Your PDFs go premium in minutes.' },
@@ -338,17 +320,6 @@ const Features: React.FC = () => (
         ))}
       </div>
 
-      <div className="mt-20 pt-12 border-t border-neutral-200">
-        <p className="text-xs font-semibold text-neutral-500 tracking-widest uppercase mb-6">Also included in every plan</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {ALSO_INCLUDED.map((x) => (
-            <div key={x.label} className="flex items-center gap-3 bg-[#faf9f4] rounded-xl px-4 py-3 text-sm text-neutral-800">
-              <x.icon className="w-4 h-4 text-orange-600 shrink-0" strokeWidth={1.75} />
-              <span>{x.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   </section>
 );
@@ -595,6 +566,7 @@ export const LandingPage: React.FC = () => (
       <LogoMarquee />
       <DashboardShowcase />
       <Features />
+      <LandingBento />
       <HowItWorks />
       <Testimonials />
       <Pricing />
