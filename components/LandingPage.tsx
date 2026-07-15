@@ -1,70 +1,133 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import dashboardImg from '../src/assets/landing-dashboard.jpg';
+
+const NAV = [
+  { label: 'Features', href: '#features' },
+  { label: 'How it works', href: '#how' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'About', href: '#about' },
+  { label: 'Contact', href: '#contact' },
+];
+
+const LOGOS = ['Grammarly', 'Mailchimp', 'Framer', 'Gumroad', 'Webflow', 'GitHub', 'Shopify', 'Notion'];
+
+const FEATURES = [
+  { title: 'GST-Ready Invoicing', desc: 'CGST, SGST, IGST split automatically. Place of supply, HSN/SAC — handled per invoice.' },
+  { title: 'AI Proposals & Quotes', desc: 'Draft studio-grade proposals in seconds. Polish scope, terms, and pricing with one click.' },
+  { title: 'Legal Backbone', desc: 'Every overdue invoice ships with an auto-drafted demand notice a real lawyer can sign.' },
+  { title: 'Client Portal', desc: 'Clients view, e-sign and pay through a branded portal — no more email ping-pong.' },
+  { title: 'UPI & Cards', desc: 'Collect via UPI, cards, and net banking. Reconciliation is automatic, not a spreadsheet.' },
+  { title: 'Lawyer Marketplace', desc: 'On-demand Indian lawyers to send notices, chase payments, and escalate when needed.' },
+];
+
+const STEPS = [
+  { n: '01', title: 'Set up your studio', desc: 'Add GSTIN, upload your logo, pick a brand accent. Your PDFs go premium in minutes.' },
+  { n: '02', title: 'Send invoices & proposals', desc: 'AI-drafted, GST-compliant, e-signable. Track opens, views, and status in real time.' },
+  { n: '03', title: 'Get paid — properly', desc: 'Auto reminders, UPI collection, and lawyer-signed notices for anything that goes silent.' },
+];
+
+const TESTIMONIALS = [
+  { quote: 'Billenty cut our overdue book by 60% in the first quarter. The legal notice flow alone paid for the platform.', name: 'Anjali Rao', role: 'Founder, Studio Kaari' },
+  { quote: 'Proposals used to eat my weekends. Now I ship a signed one before lunch.', name: 'Vikram Desai', role: 'Design Lead, Northline' },
+  { quote: 'The client portal feels like Stripe for studios. My clients actually pay on time now.', name: 'Priya Menon', role: 'Principal, Menon & Co.' },
+];
 
 const Nav: React.FC = () => (
-  <header className="sticky top-0 z-40 backdrop-blur bg-black/70 border-b border-white/10">
-    <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-mint rounded-md flex items-center justify-center text-black">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-        </div>
-        <span className="text-white font-display font-bold tracking-tight">Billenty</span>
-        <span className="ml-2 text-[10px] uppercase tracking-widest text-mint/80 border border-mint/30 rounded px-1.5 py-0.5">India</span>
-      </Link>
-      <nav className="hidden md:flex items-center gap-8 text-sm text-gray-300">
-        <a href="#problem" className="hover:text-white">Why</a>
-        <a href="#pillars" className="hover:text-white">Product</a>
-        <a href="#how" className="hover:text-white">How it works</a>
-        <a href="#pricing" className="hover:text-white">Pricing</a>
-        <a href="#faq" className="hover:text-white">FAQ</a>
-      </nav>
-      <div className="flex items-center gap-3">
-        <Link to="/dashboard" className="hidden sm:inline-flex text-sm text-gray-300 hover:text-white">Open app</Link>
-        <Link to="/login" className="text-sm text-gray-300 hover:text-white">Sign in</Link>
-        <Link to="/signup" className="text-sm font-semibold bg-mint text-black px-4 py-2 rounded-lg hover:bg-mint/90">Create account</Link>
+  <div className="sticky top-4 z-40 px-4">
+    <header className="max-w-6xl mx-auto bg-white/90 backdrop-blur border border-neutral-200 rounded-full shadow-sm">
+      <div className="h-14 pl-6 pr-2 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[11px] font-bold">B</div>
+          <span className="font-display font-semibold tracking-tight text-neutral-900">Billenty</span>
+        </Link>
+        <nav className="hidden md:flex items-center gap-8 text-sm text-neutral-600">
+          {NAV.map(n => <a key={n.label} href={n.href} className="hover:text-neutral-900 transition-colors">{n.label}</a>)}
+        </nav>
+        <Link to="/signup" className="bg-neutral-900 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-neutral-800 transition-colors">
+          Get Started
+        </Link>
       </div>
-    </div>
-  </header>
+    </header>
+  </div>
 );
 
 const Hero: React.FC = () => (
-  <section className="relative overflow-hidden bg-black text-white">
-    <div className="absolute inset-0 opacity-[0.18]" style={{
-      backgroundImage: 'radial-gradient(rgba(110,231,183,0.5) 1px, transparent 1px)',
-      backgroundSize: '28px 28px',
-    }} />
-    <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-mint/20 blur-3xl pointer-events-none" />
-    <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-28">
-      <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-mint/90 border border-mint/30 rounded-full px-3 py-1 mb-8">
-        <span className="w-1.5 h-1.5 rounded-full bg-mint animate-pulse" />
-        Invoicing with a legal backbone
+  <section className="relative pt-16 pb-24 px-6">
+    <div
+      className="absolute inset-0 pointer-events-none opacity-40"
+      style={{
+        backgroundImage: 'linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px)',
+        backgroundSize: '80px 80px',
+        maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+      }}
+    />
+    <div className="relative max-w-6xl mx-auto grid md:grid-cols-[1.4fr_1fr] gap-12 items-center pt-8">
+      <div>
+        <h1 className="font-display text-5xl md:text-7xl leading-[1.02] tracking-tight text-neutral-900">
+          Revenue <em className="font-serif italic font-normal" style={{ fontFamily: '"Instrument Serif", "DM Serif Display", Georgia, serif' }}>Automation</em> for<br />
+          India&rsquo;s Design Studios
+        </h1>
       </div>
-      <h1 className="font-display font-bold tracking-tight text-5xl md:text-7xl leading-[1.02] max-w-5xl">
-        Send the invoice.<br />
-        <span className="text-mint">Attach the lawyer.</span><br />
-        Get paid — properly.
-      </h1>
-      <p className="mt-8 text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed">
-        Billenty is the invoicing OS built for Indian design studios and freelancers. GST handled. Proposals drafted by AI. And every overdue invoice ships with a demand notice your lawyer can sign — automatically.
-      </p>
-      <div className="mt-10 flex flex-wrap items-center gap-4">
-        <Link to="/dashboard" className="bg-mint text-black font-semibold px-6 py-3.5 rounded-lg hover:bg-mint/90 transition">Open the app</Link>
-        <Link to="/signup" className="border border-white/15 text-gray-100 font-semibold px-6 py-3.5 rounded-lg hover:border-mint/50 hover:text-mint transition">Create account</Link>
-        <a href="#how" className="text-gray-300 hover:text-white px-4 py-3.5 inline-flex items-center gap-2">
-          See how it works
-          <span className="material-icons-outlined text-base">arrow_forward</span>
-        </a>
+      <div className="md:pt-6">
+        <p className="text-neutral-600 text-lg leading-relaxed max-w-md">
+          Bill, collect, and enforce payment automatically. GST-compliant invoices, AI proposals, and lawyer-signed demand notices — all in one platform.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link to="/signup" className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-medium text-sm px-6 py-3 rounded-full transition-colors">
+            Get started now
+          </Link>
+          <a href="#pricing" className="inline-flex items-center bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900 font-medium text-sm px-6 py-3 rounded-full transition-colors">
+            See pricing
+          </a>
+        </div>
       </div>
-      <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
-        {[
-          { k: '₹2.1L', v: 'avg. unpaid per Indian freelancer' },
-          { k: '54 days', v: 'median delay to get paid' },
-          { k: '18% GST', v: 'auto-split CGST/SGST/IGST' },
-          { k: '15 days', v: 'standard notice period built-in' },
-        ].map(s => (
-          <div key={s.v}>
-            <p className="text-2xl font-display font-bold text-white">{s.k}</p>
-            <p className="text-xs text-gray-400 mt-1 leading-snug">{s.v}</p>
+    </div>
+  </section>
+);
+
+const LogoMarquee: React.FC = () => (
+  <section className="relative py-8 border-y border-neutral-200 bg-white overflow-hidden">
+    <div className="flex animate-[marquee_40s_linear_infinite] gap-16 whitespace-nowrap">
+      {[...LOGOS, ...LOGOS, ...LOGOS].map((l, i) => (
+        <div key={i} className="flex items-center gap-3 text-neutral-500 text-lg">
+          <span className="w-8 h-8 rounded-full bg-neutral-900 text-white text-xs font-bold flex items-center justify-center">{l[0]}</span>
+          <span className="lowercase font-medium">{l}</span>
+        </div>
+      ))}
+    </div>
+    <style>{`@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-33.33%); } }`}</style>
+  </section>
+);
+
+const DashboardShowcase: React.FC = () => (
+  <section className="relative py-24 px-6 bg-neutral-50">
+    <div className="max-w-6xl mx-auto">
+      <img
+        src={dashboardImg}
+        alt="Billenty dashboard preview"
+        width={1600}
+        height={1104}
+        className="w-full rounded-3xl shadow-2xl"
+      />
+    </div>
+  </section>
+);
+
+const Features: React.FC = () => (
+  <section id="features" className="py-24 px-6 bg-white">
+    <div className="max-w-6xl mx-auto">
+      <p className="text-sm font-medium text-neutral-500 mb-3">Features</p>
+      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
+        Everything you need to <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>get paid</em>
+      </h2>
+      <p className="mt-4 text-neutral-600 max-w-2xl">One platform to bill clients, collect payments, and enforce them — built for Indian designers.</p>
+      <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-8 border-t border-neutral-200">
+        {FEATURES.map((f, i) => (
+          <div key={f.title} className={`p-8 border-b border-neutral-200 ${i % 3 !== 2 ? 'lg:border-r' : ''} ${i % 2 !== 1 ? 'md:border-r lg:border-r' : ''}`}>
+            <h3 className="font-display text-xl font-semibold text-neutral-900 mb-2">{f.title}</h3>
+            <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
           </div>
         ))}
       </div>
@@ -72,21 +135,19 @@ const Hero: React.FC = () => (
   </section>
 );
 
-const Problem: React.FC = () => (
-  <section id="problem" className="bg-[#0a0a0b] text-white border-t border-white/5">
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">The Indian creative payment problem</p>
-      <h2 className="font-display text-3xl md:text-5xl font-bold max-w-3xl leading-tight">Every studio in India is owed money. Nobody wants to ask for it twice.</h2>
-      <div className="grid md:grid-cols-3 gap-6 mt-16">
-        {[
-          { n: '01', t: 'Polite follow-ups don\'t work', d: 'The 3rd "just checking in" email gets ignored. Without a legal cover, clients learn that your deadline is optional.' },
-          { n: '02', t: 'Lawyers are expensive to involve early', d: 'Drafting a single demand notice costs ₹5,000–₹15,000. So freelancers wait. And wait. And eventually write off the invoice.' },
-          { n: '03', t: 'GST + interstate is a tax minefield', d: 'CGST/SGST for intra-state, IGST for inter-state, SAC 9983, reverse charge — getting it wrong invites scrutiny you can\'t afford.' },
-        ].map(p => (
-          <div key={p.n} className="border border-white/10 rounded-2xl p-7 hover:border-mint/40 transition">
-            <p className="font-display text-mint/70 text-sm mb-4">{p.n}</p>
-            <h3 className="font-display text-xl font-semibold mb-3">{p.t}</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">{p.d}</p>
+const HowItWorks: React.FC = () => (
+  <section id="how" className="py-24 px-6 bg-neutral-50">
+    <div className="max-w-6xl mx-auto">
+      <p className="text-sm font-medium text-neutral-500 mb-3">How it works</p>
+      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
+        Live in <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>three</em> simple steps
+      </h2>
+      <div className="mt-14 grid md:grid-cols-3 gap-8">
+        {STEPS.map(s => (
+          <div key={s.n} className="bg-white border border-neutral-200 rounded-2xl p-8">
+            <div className="text-5xl font-display text-neutral-300 font-bold mb-6">{s.n}</div>
+            <h3 className="font-display text-xl font-semibold text-neutral-900 mb-2">{s.title}</h3>
+            <p className="text-neutral-600 text-sm leading-relaxed">{s.desc}</p>
           </div>
         ))}
       </div>
@@ -94,250 +155,78 @@ const Problem: React.FC = () => (
   </section>
 );
 
-const Pillars: React.FC = () => {
-  const items = [
-    {
-      tag: 'Money in',
-      title: 'Invoices, quotes & proposals — GST-native',
-      body: 'SAC 9983 by default. CGST+SGST when client and you share a state, IGST otherwise. Rupees, lakhs, and crores formatted the way India reads them.',
-      bullets: ['Recurring invoices', 'Razorpay-ready', 'PDF that survives forwarding'],
-    },
-    {
-      tag: 'The differentiator',
-      title: 'A lawyer attached to every invoice',
-      body: 'Add your lawyer once. When an invoice goes 30 days overdue, Billenty drafts a formal demand notice citing the Contract Act, MSME Act and CPC — your lawyer reviews, signs, and sends.',
-      bullets: ['AI-drafted notice in seconds', 'Lawyer gets read-only login', 'Audit trail per invoice'],
-    },
-    {
-      tag: 'AI assist',
-      title: 'Proposals that read like you wrote them — better',
-      body: 'Generate a scope of work from a brief. Polish a line item. Draft a watertight agreement. Built on Gemini, tuned for Indian design contracts.',
-      bullets: ['One-click scope', 'Tone matches your brand', 'Agency vs freelancer voice'],
-    },
-    {
-      tag: 'Studio ops',
-      title: 'Clients, products, reports — in one quiet place',
-      body: 'No 9-tab CRM. Sales overview, ageing, who owes you what, and which proposal is sitting unsigned. The dashboard you\'d design for yourself.',
-      bullets: ['Multi-seat for agencies (5)', 'Single-seat for freelancers', 'Dark mode, properly'],
-    },
-  ];
-  return (
-    <section id="pillars" className="bg-black text-white border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6 py-24">
-        <div className="flex items-end justify-between flex-wrap gap-6 mb-16">
-          <div>
-            <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">Four pillars</p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold max-w-2xl leading-tight">Everything an Indian studio needs. Nothing it doesn't.</h2>
-          </div>
-          <Link to="/signup" className="text-sm text-mint hover:text-white inline-flex items-center gap-2">Explore the product <span className="material-icons-outlined text-base">arrow_outward</span></Link>
-        </div>
-        <div className="grid md:grid-cols-2 gap-6">
-          {items.map((it, i) => (
-            <div key={i} className="relative border border-white/10 rounded-3xl p-8 overflow-hidden group hover:border-mint/40 transition">
-              <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-mint/5 blur-2xl group-hover:bg-mint/10 transition" />
-              <span className="relative text-[11px] uppercase tracking-[0.18em] text-mint/80">{it.tag}</span>
-              <h3 className="relative font-display text-2xl font-semibold mt-3 leading-snug">{it.title}</h3>
-              <p className="relative text-sm text-gray-400 mt-4 leading-relaxed">{it.body}</p>
-              <ul className="relative mt-6 space-y-2">
-                {it.bullets.map(b => (
-                  <li key={b} className="flex items-center gap-2 text-sm text-gray-300">
-                    <span className="material-icons-outlined text-mint text-base">check_circle</span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const How: React.FC = () => (
-  <section id="how" className="bg-[#0a0a0b] text-white border-t border-white/5">
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">How it works</p>
-      <h2 className="font-display text-3xl md:text-5xl font-bold max-w-3xl leading-tight">Three steps. The third one runs while you sleep.</h2>
-      <div className="mt-16 grid md:grid-cols-3 gap-10">
-        {[
-          { n: '01', t: 'Set up in 90 seconds', d: 'Tell us if you\'re a freelancer or agency, your state, and (optional) GSTIN. We pre-fill the rest.' },
-          { n: '02', t: 'Send invoices & proposals', d: 'Use templates that look like a brand asset. GST splits itself. PDFs ship with your logo and signature.' },
-          { n: '03', t: 'Let the legal layer chase', d: '30 days overdue → AI drafts a demand notice → your lawyer signs → client pays. You barely touched it.' },
-        ].map(s => (
-          <div key={s.n} className="relative">
-            <div className="text-6xl font-display font-bold text-mint/20 leading-none">{s.n}</div>
-            <h3 className="font-display text-xl font-semibold mt-4">{s.t}</h3>
-            <p className="text-sm text-gray-400 mt-3 leading-relaxed">{s.d}</p>
-          </div>
+const Testimonials: React.FC = () => (
+  <section className="py-24 px-6 bg-white">
+    <div className="max-w-6xl mx-auto">
+      <p className="text-sm font-medium text-neutral-500 mb-3">Testimonials</p>
+      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
+        Loved by <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>design studios</em>
+      </h2>
+      <div className="mt-14 grid md:grid-cols-3 gap-6">
+        {TESTIMONIALS.map(t => (
+          <figure key={t.name} className="bg-neutral-50 border border-neutral-200 rounded-2xl p-8 flex flex-col justify-between">
+            <blockquote className="text-neutral-800 leading-relaxed">&ldquo;{t.quote}&rdquo;</blockquote>
+            <figcaption className="mt-6 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold">{t.name[0]}</div>
+              <div>
+                <div className="text-sm font-semibold text-neutral-900">{t.name}</div>
+                <div className="text-xs text-neutral-500">{t.role}</div>
+              </div>
+            </figcaption>
+          </figure>
         ))}
       </div>
     </div>
   </section>
 );
-
-const Compare: React.FC = () => {
-  const rows = [
-    ['GST-native (CGST/SGST/IGST split)', true, 'manual', 'manual'],
-    ['Indian Rupee + lakh/crore formatting', true, 'partial', false],
-    ['Auto-drafted legal demand notice', true, false, false],
-    ['Lawyer read-only login per invoice', true, false, false],
-    ['AI proposal & scope generation', true, false, 'add-on'],
-    ['Designed for studios, not accountants', true, false, false],
-  ];
-  const Cell = ({ v }: { v: boolean | string }) =>
-    v === true ? <span className="material-icons-outlined text-mint">check</span>
-    : v === false ? <span className="text-gray-700">—</span>
-    : <span className="text-xs text-gray-400 italic">{v}</span>;
-  return (
-    <section className="bg-black text-white border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-6 py-24">
-        <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">Why not the others</p>
-        <h2 className="font-display text-3xl md:text-5xl font-bold leading-tight">Spreadsheets are free. Generic tools are global. Billenty is yours.</h2>
-        <div className="mt-12 border border-white/10 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-white/[0.03]">
-              <tr className="text-left text-xs uppercase tracking-wider text-gray-400">
-                <th className="px-6 py-4 font-medium">Capability</th>
-                <th className="px-6 py-4 font-medium text-mint">Billenty</th>
-                <th className="px-6 py-4 font-medium">Zoho / QuickBooks</th>
-                <th className="px-6 py-4 font-medium">Spreadsheets</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} className="border-t border-white/5">
-                  <td className="px-6 py-4 text-gray-200">{r[0] as string}</td>
-                  <td className="px-6 py-4"><Cell v={r[1] as any} /></td>
-                  <td className="px-6 py-4"><Cell v={r[2] as any} /></td>
-                  <td className="px-6 py-4"><Cell v={r[3] as any} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Pricing: React.FC = () => (
-  <section id="pricing" className="bg-[#0a0a0b] text-white border-t border-white/5">
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">Pricing</p>
-      <h2 className="font-display text-3xl md:text-5xl font-bold max-w-2xl leading-tight">Honest pricing in INR. No "starting from $".</h2>
-      <div className="grid md:grid-cols-2 gap-6 mt-14 max-w-4xl">
-        <div className="border border-white/10 rounded-3xl p-8">
-          <p className="text-xs uppercase tracking-widest text-gray-400">Freelancer</p>
-          <p className="font-display text-5xl font-bold mt-4">₹0<span className="text-base font-normal text-gray-400">/mo</span></p>
-          <p className="text-sm text-gray-400 mt-2">Forever. While we're in early access.</p>
-          <ul className="mt-8 space-y-3 text-sm text-gray-300">
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> Unlimited invoices, quotes, proposals</li>
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> 1 lawyer attached</li>
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> AI assist (fair use)</li>
-          </ul>
-          <Link to="/signup" className="mt-8 inline-block text-mint hover:text-white">Start free →</Link>
-        </div>
-        <div className="relative border border-mint/40 rounded-3xl p-8 bg-mint/[0.04]">
-          <span className="absolute -top-3 left-8 bg-mint text-black text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full">For studios</span>
-          <p className="text-xs uppercase tracking-widest text-mint">Agency</p>
-          <p className="font-display text-5xl font-bold mt-4">₹1,499<span className="text-base font-normal text-gray-400">/mo</span></p>
-          <p className="text-sm text-gray-400 mt-2">Up to 5 seats. Billed monthly, cancel anytime.</p>
-          <ul className="mt-8 space-y-3 text-sm text-gray-300">
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> Everything in Freelancer</li>
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> Multi-seat (5), shared clients</li>
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> Unlimited lawyers & engagements</li>
-            <li className="flex gap-2"><span className="material-icons-outlined text-mint text-base">check</span> Agency-branded proposal templates</li>
-          </ul>
-          <Link to="/signup" className="mt-8 inline-block bg-mint text-black font-semibold px-5 py-2.5 rounded-lg hover:bg-mint/90">Start 14-day trial</Link>
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-const FAQ: React.FC = () => {
-  const qs = [
-    { q: 'Do I need to bring my own lawyer?', a: 'You can — and most studios do. Or pick from our partner roster (rolling out). Either way, the lawyer gets a read-only invoice login, not your whole account.' },
-    { q: 'Is the AI-drafted notice legally valid?', a: 'It\'s a draft. A human lawyer must review, edit, sign and send it. We surface the relevant Indian provisions (Contract Act, MSME Act, CPC Order XXXVII) so the lawyer\'s 30 minutes of work becomes 5.' },
-    { q: 'Does Billenty file e-invoices on the GST portal?', a: 'Not yet. We generate GST-compliant invoices with correct CGST/SGST/IGST splits and SAC codes. IRP filing is on the roadmap for Q3.' },
-    { q: 'Can I migrate from Zoho Books or Refrens?', a: 'Yes — CSV import for clients and invoices is live. Full Zoho sync (clients, products, invoices, payments) is in private beta.' },
-    { q: 'What about international clients?', a: 'You can invoice in USD/EUR/GBP with FIRC-friendly templates. The legal layer is India-specific today; export-payment notices are next.' },
-  ];
-  return (
-    <section id="faq" className="bg-black text-white border-t border-white/5">
-      <div className="max-w-4xl mx-auto px-6 py-24">
-        <p className="text-mint text-xs uppercase tracking-[0.2em] mb-4">FAQ</p>
-        <h2 className="font-display text-3xl md:text-5xl font-bold leading-tight">Questions Indian studios actually ask.</h2>
-        <div className="mt-12 divide-y divide-white/10 border-y border-white/10">
-          {qs.map(({ q, a }, i) => (
-            <details key={i} className="group py-6">
-              <summary className="cursor-pointer list-none flex items-start justify-between gap-6">
-                <span className="font-display text-lg font-semibold">{q}</span>
-                <span className="material-icons-outlined text-mint transition group-open:rotate-45">add</span>
-              </summary>
-              <p className="mt-4 text-sm text-gray-400 leading-relaxed pr-10">{a}</p>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const CTA: React.FC = () => (
-  <section className="bg-mint text-black">
-    <div className="max-w-6xl mx-auto px-6 py-24 text-center">
-      <h2 className="font-display text-4xl md:text-6xl font-bold leading-[1.05] max-w-3xl mx-auto">Stop chasing. Start collecting.</h2>
-      <p className="mt-6 text-base md:text-lg text-black/70 max-w-xl mx-auto">Join the early-access studios using Billenty to send invoices that arrive with consequences.</p>
-      <div className="mt-10 flex flex-wrap justify-center gap-4">
-        <Link to="/signup" className="bg-black text-mint font-semibold px-7 py-3.5 rounded-lg hover:bg-gray-900">Create my workspace</Link>
-        <Link to="/login" className="text-black/80 hover:text-black px-4 py-3.5">I already have an account →</Link>
+  <section id="pricing" className="py-24 px-6 bg-neutral-50">
+    <div className="max-w-4xl mx-auto text-center">
+      <h2 className="font-display text-4xl md:text-6xl tracking-tight text-neutral-900">
+        Ready to <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>automate</em> your revenue?
+      </h2>
+      <p className="mt-6 text-neutral-600 text-lg">Start your 14-day free trial. No credit card required. Cancel anytime.</p>
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <Link to="/signup" className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-full transition-colors">Get started now</Link>
+        <Link to="/login" className="bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900 font-medium px-6 py-3 rounded-full transition-colors">Sign in</Link>
       </div>
     </div>
   </section>
 );
 
 const Footer: React.FC = () => (
-  <footer className="bg-black text-gray-400 border-t border-white/10">
-    <div className="max-w-7xl mx-auto px-6 py-12 flex flex-wrap items-center justify-between gap-6 text-sm">
+  <footer id="contact" className="py-12 px-6 bg-white border-t border-neutral-200">
+    <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-mint rounded-md flex items-center justify-center text-black">
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-        </div>
-        <span className="text-white font-display font-bold">Billenty</span>
-        <span className="text-gray-600">· Made in India for Indian studios</span>
+        <div className="w-6 h-6 rounded-md bg-neutral-900 flex items-center justify-center text-white text-[11px] font-bold">B</div>
+        <span className="font-display font-semibold text-neutral-900">Billenty</span>
+        <span className="text-neutral-500 text-sm ml-2">© {new Date().getFullYear()}</span>
       </div>
-      <div className="flex gap-6">
-        <a href="#problem" className="hover:text-white">Why</a>
-        <a href="#pricing" className="hover:text-white">Pricing</a>
-        <a href="#faq" className="hover:text-white">FAQ</a>
-        <Link to="/login" className="hover:text-white">Sign in</Link>
+      <div className="flex items-center gap-6 text-sm text-neutral-500">
+        <a href="#features" className="hover:text-neutral-900">Features</a>
+        <a href="#how" className="hover:text-neutral-900">How it works</a>
+        <a href="#pricing" className="hover:text-neutral-900">Pricing</a>
+        <Link to="/login" className="hover:text-neutral-900">Sign in</Link>
       </div>
-      <p className="text-xs text-gray-600">© 2026 Billenty. All rights reserved.</p>
     </div>
   </footer>
 );
 
-export const LandingPage: React.FC = () => {
-  React.useEffect(() => {
-    document.documentElement.classList.add('dark');
-    document.title = 'Billenty — Invoicing with a legal backbone, for Indian studios';
-  }, []);
-  return (
-    <div className="min-h-screen bg-black font-body antialiased">
-      <Nav />
+export const LandingPage: React.FC = () => (
+  <div className="min-h-screen bg-neutral-100 text-neutral-900 font-sans pt-4">
+    <Nav />
+    <main className="mt-2 bg-white rounded-t-[2.5rem] overflow-hidden max-w-[1400px] mx-4 md:mx-auto">
       <Hero />
-      <Problem />
-      <Pillars />
-      <How />
-      <Compare />
-      <Pricing />
-      <FAQ />
+      <LogoMarquee />
+      <DashboardShowcase />
+      <Features />
+      <HowItWorks />
+      <Testimonials />
       <CTA />
       <Footer />
-    </div>
-  );
-};
+    </main>
+  </div>
+);
 
 export default LandingPage;
