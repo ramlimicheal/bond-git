@@ -19,8 +19,9 @@ const Nav: React.FC = () => (
         <a href="#faq" className="hover:text-white">FAQ</a>
       </nav>
       <div className="flex items-center gap-3">
+        <Link to="/dashboard" className="hidden sm:inline-flex text-sm text-gray-300 hover:text-white">Open app</Link>
         <Link to="/login" className="text-sm text-gray-300 hover:text-white">Sign in</Link>
-        <Link to="/signup" className="text-sm font-semibold bg-mint text-black px-4 py-2 rounded-lg hover:bg-mint/90">Start free</Link>
+        <Link to="/signup" className="text-sm font-semibold bg-mint text-black px-4 py-2 rounded-lg hover:bg-mint/90">Create account</Link>
       </div>
     </div>
   </header>
@@ -47,7 +48,8 @@ const Hero: React.FC = () => (
         Billenty is the invoicing OS built for Indian design studios and freelancers. GST handled. Proposals drafted by AI. And every overdue invoice ships with a demand notice your lawyer can sign — automatically.
       </p>
       <div className="mt-10 flex flex-wrap items-center gap-4">
-        <Link to="/signup" className="bg-mint text-black font-semibold px-6 py-3.5 rounded-lg hover:bg-mint/90 transition">Start free — no card</Link>
+        <Link to="/dashboard" className="bg-mint text-black font-semibold px-6 py-3.5 rounded-lg hover:bg-mint/90 transition">Open the app</Link>
+        <Link to="/signup" className="border border-white/15 text-gray-100 font-semibold px-6 py-3.5 rounded-lg hover:border-mint/50 hover:text-mint transition">Create account</Link>
         <a href="#how" className="text-gray-300 hover:text-white px-4 py-3.5 inline-flex items-center gap-2">
           See how it works
           <span className="material-icons-outlined text-base">arrow_forward</span>
