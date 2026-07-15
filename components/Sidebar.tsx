@@ -3,6 +3,7 @@ import { useAuth } from '../auth.context';
 import { useOrg } from '../org.context';
 import { Icons } from './Icon';
 import { Page } from '../types';
+import { LogOut, Settings as SettingsIcon, User as UserIcon } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,15 +51,20 @@ const SECTIONS: NavSection[] = [
   },
 ];
 
-const ChevronsUpDown = ({ className = '' }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="m7 15 5 5 5-5" /><path d="m7 9 5-5 5 5" />
-  </svg>
-);
-
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, onNavigate }) => {
   const { logout, user } = useAuth();
   const { org } = useOrg();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpen]);
 
   const handleLogout = async () => {
     try { await logout(); window.location.href = '/'; } catch (e) { console.error('Logout failed', e); }
@@ -96,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
                 <div className="font-semibold text-sm text-[#1A1A1A] truncate">{orgName}</div>
               </div>
             </div>
-            <ChevronsUpDown className="w-4 h-4 text-[#808080] shrink-0" />
+            <Icons.ChevronDown size={14} className="text-[#808080] shrink-0" />
           </div>
 
           {SECTIONS.map((section) => (
@@ -126,8 +132,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         </div>
 
         {/* User profile card */}
-        <div className="pt-3 border-t border-neutral-200">
-          <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-2">
+        <div className="pt-3 border-t border-neutral-200 relative" ref={menuRef}>
+          {menuOpen && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-neutral-200 rounded-lg overflow-hidden z-50">
+              <button
+                onClick={() => { setMenuOpen(false); handleNav(Page.SETTINGS); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#1A1A1A] hover:bg-[#faf9f4] text-left"
+              >
+                <SettingsIcon size={14} /> Settings
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); handleNav(Page.ACCOUNTS); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#1A1A1A] hover:bg-[#faf9f4] text-left"
+              >
+                <UserIcon size={14} /> Account
+              </button>
+              <div className="border-t border-neutral-200" />
+              <button
+                onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 text-left"
+              >
+                <LogOut size={14} /> Log out
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="w-full flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-2 hover:bg-[#faf9f4] transition-colors"
+          >
             <div className="flex items-center gap-2 min-w-0">
               <div className="relative shrink-0">
                 <div className="w-8 h-8 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center font-semibold text-sm">
@@ -135,15 +167,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
                 </div>
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 text-left">
                 <div className="font-semibold text-[13px] leading-tight text-[#0F172A] truncate">{userEmail || 'Signed in'}</div>
                 <div className="text-[11px] text-[#808080]">Owner</div>
               </div>
             </div>
-            <button onClick={handleLogout} title="Log out" className="text-[#808080] hover:text-red-600 p-1">
-              <Icons.ChevronDown size={16} />
-            </button>
-          </div>
+            <Icons.More size={16} className="text-[#808080] shrink-0" />
+          </button>
         </div>
 
         <button onClick={onClose} className="md:hidden absolute top-3 right-3 text-[#808080]">
