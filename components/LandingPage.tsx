@@ -169,7 +169,7 @@ const Hero: React.FC = () => (
 
 const LogoMarquee: React.FC = () => (
   <section className="relative py-8 border-y border-neutral-200 bg-white overflow-hidden">
-    <div className="flex animate-[marquee_40s_linear_infinite] gap-16 whitespace-nowrap">
+    <div className="flex animate-[marquee_22s_linear_infinite] gap-16 whitespace-nowrap">
       {[...LOGOS, ...LOGOS, ...LOGOS].map((l, i) => (
         <div key={i} className="flex items-center gap-3 text-neutral-500 text-lg">
           <span className="w-8 h-8 rounded-full bg-neutral-900 text-white text-xs font-bold flex items-center justify-center">{l[0]}</span>
