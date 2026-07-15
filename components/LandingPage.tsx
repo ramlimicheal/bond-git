@@ -347,10 +347,6 @@ const FAQ: React.FC = () => {
     </section>
   );
 };
-    </div>
-  </section>
-);
-
 const CTA: React.FC = () => (
   <section id="pricing" className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
