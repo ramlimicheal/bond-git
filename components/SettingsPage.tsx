@@ -19,6 +19,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     const [savingAuto, setSavingAuto] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    // Branding state
+    const [logoPath, setLogoPath] = useState<string | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [brandAccent, setBrandAccent] = useState<string>('#c98a26');
+
     // Company Settings State
     const [companyName, setCompanyName] = useState('');
     const [companyEmail, setCompanyEmail] = useState('');
@@ -78,11 +84,68 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         setDefaultTaxRate(String(org.default_tax_rate ?? 18));
         setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
         setAutoNoticeDays(org.auto_notice_days ?? 30);
+        const anyOrg = org as any;
+        setLogoPath(anyOrg.logo_url || null);
+        setBrandAccent(anyOrg.brand_accent || '#c98a26');
         if (org.notifications) {
             setNotifEmail(org.notifications.email || { sent: true, viewed: true, paid: true, overdue: true });
             setNotifWhatsapp(org.notifications.whatsapp || { sent: false, viewed: false, paid: false, overdue: false });
         }
     }, [org]);
+
+    // Resolve a signed preview URL whenever logoPath changes.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            if (!logoPath) { setLogoPreview(null); return; }
+            if (/^(https?:|data:)/i.test(logoPath)) { setLogoPreview(logoPath); return; }
+            const { data } = await supabase.storage.from('brand-assets').createSignedUrl(logoPath, 600);
+            if (!cancelled) setLogoPreview(data?.signedUrl || null);
+        })();
+        return () => { cancelled = true; };
+    }, [logoPath]);
+
+    const handleLogoUpload = async (file: File) => {
+        if (!orgId) { toast.error('No organization found'); return; }
+        if (file.size > 2 * 1024 * 1024) { toast.error('Logo must be under 2MB'); return; }
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+        const path = `${orgId}/logo-${Date.now()}.${ext}`;
+        setUploadingLogo(true);
+        const { error: upErr } = await supabase.storage
+            .from('brand-assets')
+            .upload(path, file, { upsert: true, contentType: file.type });
+        if (upErr) { setUploadingLogo(false); toast.error(`Upload failed: ${upErr.message}`); return; }
+        // Persist path + accent on the org row.
+        const { error } = await (supabase as any)
+            .from('organizations')
+            .update({ logo_url: path, brand_accent: brandAccent })
+            .eq('id', orgId);
+        setUploadingLogo(false);
+        if (error) { toast.error(`Could not save logo: ${error.message}`); return; }
+        setLogoPath(path);
+        await refresh();
+        toast.success('Logo uploaded');
+    };
+
+    const handleRemoveLogo = async () => {
+        if (!orgId || !logoPath) return;
+        if (!/^(https?:|data:)/i.test(logoPath)) {
+            await supabase.storage.from('brand-assets').remove([logoPath]);
+        }
+        const { error } = await (supabase as any)
+            .from('organizations').update({ logo_url: null }).eq('id', orgId);
+        if (error) { toast.error(error.message); return; }
+        setLogoPath(null);
+        await refresh();
+        toast.success('Logo removed');
+    };
+
+    const saveBrandAccent = async (hex: string) => {
+        setBrandAccent(hex);
+        if (!orgId) return;
+        await (supabase as any).from('organizations').update({ brand_accent: hex }).eq('id', orgId);
+        await refresh();
+    };
 
     const handleSave = async () => {
         if (!orgId) { toast.error('No organization found'); return; }
@@ -109,6 +172,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
             default_notes: invoiceNotes,
             default_terms: invoiceTerms,
             notifications: { email: notifEmail, whatsapp: notifWhatsapp },
+            brand_accent: brandAccent,
         };
 
         const { error } = await (supabase as any)
