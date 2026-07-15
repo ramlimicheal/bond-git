@@ -222,11 +222,13 @@ async function buildInvoiceLikePDF(
   doc: { kind: 'INVOICE' | 'QUOTE'; number: string; status: string; dateLabel: string; dateValue: string; dueLabel: string; dueValue: string; clientName: string; clientType: string; items: { description: string; quantity: number; price: number }[]; subtotal: number; tax: number; total: number; amountPaid?: number; },
   org: OrgBranding,
 ): Promise<Blob> {
+  applyBrand(org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, org.logo_url);
   const page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, org, doc.kind, doc.number);
+  drawMasthead(page, fonts, org, doc.kind, doc.number, logo);
 
   // Subtle status watermark
   const st = (doc.status || 'draft').toUpperCase();
@@ -238,6 +240,8 @@ async function buildInvoiceLikePDF(
   // Kind headline in generous display size (typographic hero of the page)
   let y = PAGE_H - MARGIN - 70;
   drawText(page, doc.kind === 'INVOICE' ? 'Invoice.' : 'Quotation.', MARGIN, y, { font: fonts.bold, size: 40, color: COLORS.ink });
+  // Accent underline for the display title
+  drawLine(page, MARGIN, y - 6, MARGIN + 40, y - 6, COLORS.accent, 2);
 
   // Right-side metadata grid (Issued / Due / Amount)
   const metaX = PAGE_W - MARGIN - 220;
