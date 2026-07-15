@@ -237,7 +237,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     } catch (e) { toast.error((e as Error).message); } finally { setScanning(false); }
   };
 
-  const nav: { group: string; items: { id: SectionId; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] }[] = [
+  const nav: { group: string; items: { id: SectionId; label: string; icon: any }[] }[] = [
     { group: 'Personal', items: [
       { id: 'account', label: 'Account', icon: User },
     ]},
