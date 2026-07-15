@@ -762,6 +762,7 @@ export type Database = {
           bank_account_number: string | null
           bank_ifsc: string | null
           bank_name: string | null
+          brand_accent: string | null
           city: string | null
           country: string
           created_at: string
@@ -803,6 +804,7 @@ export type Database = {
           bank_account_number?: string | null
           bank_ifsc?: string | null
           bank_name?: string | null
+          brand_accent?: string | null
           city?: string | null
           country?: string
           created_at?: string
@@ -844,6 +846,7 @@ export type Database = {
           bank_account_number?: string | null
           bank_ifsc?: string | null
           bank_name?: string | null
+          brand_accent?: string | null
           city?: string | null
           country?: string
           created_at?: string

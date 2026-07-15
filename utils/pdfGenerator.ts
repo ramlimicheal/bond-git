@@ -1,10 +1,10 @@
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib';
 import QRCode from 'qrcode';
 import type { Invoice, Proposal, Quote } from '../types';
 
 // ===== Editorial design tokens =====
 // Monochrome ink on warm paper. One micro-accent used sparingly.
-const COLORS = {
+const DEFAULT_COLORS = {
   ink: rgb(0.07, 0.07, 0.08),          // near-black body
   inkSoft: rgb(0.20, 0.20, 0.22),      // secondary
   muted: rgb(0.48, 0.48, 0.52),        // labels
@@ -17,6 +17,27 @@ const COLORS = {
   danger: rgb(0.72, 0.12, 0.12),
   white: rgb(1, 1, 1),
 };
+
+// Mutable palette used by the generator. Each PDF build resets it based on the
+// caller's OrgBranding so brand accent color flows through every draw call.
+let COLORS = { ...DEFAULT_COLORS };
+
+function hexToRgb(hex?: string | null) {
+  if (!hex) return null;
+  const h = hex.trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
+
+function applyBrand(org: OrgBranding) {
+  COLORS = { ...DEFAULT_COLORS };
+  const accent = hexToRgb(org.brand_accent);
+  if (accent) COLORS.accent = accent;
+}
 
 const MARGIN = 56;
 const PAGE_W = 595.28; // A4
@@ -56,6 +77,27 @@ interface OrgBranding {
   email?: string | null;
   phone?: string | null;
   upi_vpa?: string | null;
+  logo_url?: string | null;      // Fetchable URL (signed URL or data URL) for the logo image.
+  brand_accent?: string | null;  // Hex color, e.g. "#c98a26".
+}
+
+// Try to load and embed the org logo. Returns null if not available/decodable.
+async function embedLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    // Sniff format from magic bytes so we call the right embedder.
+    const isPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+    const isJpg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    if (isPng) return await pdf.embedPng(buf);
+    if (isJpg) return await pdf.embedJpg(buf);
+    // Last-ditch: try PNG.
+    try { return await pdf.embedPng(buf); } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function loadFonts(pdf: PDFDocument) {
@@ -117,22 +159,34 @@ function fmtDate(s: string | null | undefined) {
 // ============ Editorial masthead ============
 // Kind: "INVOICE" / "QUOTE" / "PROPOSAL" — set as tiny caps eyebrow.
 // The document NUMBER is the typographic hero.
-function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string, number: string) {
+function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string, number: string, logo: PDFImage | null = null) {
   const top = PAGE_H - MARGIN;
 
-  // Left: monogram + wordmark
-  const monoSize = 22;
-  page.drawRectangle({ x: MARGIN, y: top - monoSize, width: monoSize, height: monoSize, color: COLORS.ink });
-  drawText(page, 'B', MARGIN + 6.5, top - monoSize + 5.5, { font: fonts.bold, size: 14, color: COLORS.paper });
-  drawText(page, (org.name || 'Your Company').toUpperCase(), MARGIN + monoSize + 10, top - 12, { font: fonts.bold, size: 10 });
-  drawText(page, org.legal_name || 'Independent Studio', MARGIN + monoSize + 10, top - 22, { font: fonts.regular, size: 8, color: COLORS.muted });
+  // Left: logo (if uploaded) or monogram, plus wordmark
+  const monoSize = 26;
+  if (logo) {
+    // Scale to fit within monoSize box while preserving aspect ratio.
+    const scale = Math.min(monoSize / logo.width, monoSize / logo.height);
+    const w = logo.width * scale;
+    const h = logo.height * scale;
+    page.drawImage(logo, { x: MARGIN, y: top - monoSize + (monoSize - h) / 2, width: w, height: h });
+  } else {
+    const m = 22;
+    page.drawRectangle({ x: MARGIN, y: top - m, width: m, height: m, color: COLORS.ink });
+    drawText(page, (org.name || 'B').charAt(0).toUpperCase(), MARGIN + 6.5, top - m + 5.5, { font: fonts.bold, size: 14, color: COLORS.paper });
+  }
+  const wordX = MARGIN + monoSize + 10;
+  drawText(page, (org.name || 'Your Company').toUpperCase(), wordX, top - 12, { font: fonts.bold, size: 10 });
+  drawText(page, org.legal_name || 'Independent Studio', wordX, top - 22, { font: fonts.regular, size: 8, color: COLORS.muted });
 
   // Right: eyebrow + number hero
-  drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.muted, 2.2);
+  drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.accent, 2.2);
   drawText(page, `No. ${number}`, PAGE_W - MARGIN - 90, top - 22, { font: fonts.regular, size: 10, color: COLORS.ink });
 
   // Full-width hairline under masthead
   drawLine(page, MARGIN, top - 36, PAGE_W - MARGIN, top - 36, COLORS.hairStrong, 0.8);
+  // Accent rule directly beneath the strong rule — the branded touch.
+  drawLine(page, MARGIN, top - 38, MARGIN + 60, top - 38, COLORS.accent, 1.5);
 }
 
 function drawFooter(page: PDFPage, fonts: any, pageNum = 1, total = 1) {
@@ -168,11 +222,13 @@ async function buildInvoiceLikePDF(
   doc: { kind: 'INVOICE' | 'QUOTE'; number: string; status: string; dateLabel: string; dateValue: string; dueLabel: string; dueValue: string; clientName: string; clientType: string; items: { description: string; quantity: number; price: number }[]; subtotal: number; tax: number; total: number; amountPaid?: number; },
   org: OrgBranding,
 ): Promise<Blob> {
+  applyBrand(org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, org.logo_url);
   const page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, org, doc.kind, doc.number);
+  drawMasthead(page, fonts, org, doc.kind, doc.number, logo);
 
   // Subtle status watermark
   const st = (doc.status || 'draft').toUpperCase();
@@ -184,6 +240,8 @@ async function buildInvoiceLikePDF(
   // Kind headline in generous display size (typographic hero of the page)
   let y = PAGE_H - MARGIN - 70;
   drawText(page, doc.kind === 'INVOICE' ? 'Invoice.' : 'Quotation.', MARGIN, y, { font: fonts.bold, size: 40, color: COLORS.ink });
+  // Accent underline for the display title
+  drawLine(page, MARGIN, y - 6, MARGIN + 40, y - 6, COLORS.accent, 2);
 
   // Right-side metadata grid (Issued / Due / Amount)
   const metaX = PAGE_W - MARGIN - 220;
@@ -340,13 +398,15 @@ export async function generateQuotePDF(quote: Quote, org: OrgBranding = {}): Pro
 
 // ============ PROPOSAL TEMPLATE ============
 export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): Promise<Blob> {
+  applyBrand(org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, org.logo_url);
 
   // ===== COVER PAGE =====
   let page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+  drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
 
   // Large date/year set as editorial detail
   drawLabel(page, `PREPARED  ${fmtDate(new Date().toISOString())}`, MARGIN, PAGE_H - MARGIN - 60, fonts.bold, 7, COLORS.muted, 1.8);
@@ -382,7 +442,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
   if (p.sections && p.sections.length > 0) {
     page = pdf.addPage([PAGE_W, PAGE_H]);
     paintPaper(page);
-    drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+    drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
     let y = PAGE_H - MARGIN - 70;
 
     let sectionNum = 0;
@@ -392,7 +452,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
         drawFooter(page, fonts, 0, 0);
         page = pdf.addPage([PAGE_W, PAGE_H]);
         paintPaper(page);
-        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
         y = PAGE_H - MARGIN - 70;
       }
       // Section number in muted large numeral, title beside it
@@ -411,7 +471,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
             drawFooter(page, fonts, 0, 0);
             page = pdf.addPage([PAGE_W, PAGE_H]);
             paintPaper(page);
-            drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+            drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
             y = PAGE_H - MARGIN - 70;
           }
           drawText(page, ln, MARGIN + 20, y, { font: fonts.regular, size: 10.5, color: COLORS.inkSoft });
@@ -428,7 +488,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
         drawFooter(page, fonts, 0, 0);
         page = pdf.addPage([PAGE_W, PAGE_H]);
         paintPaper(page);
-        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
         y = PAGE_H - MARGIN - 70;
       }
       drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hairStrong, 0.6);
@@ -493,11 +553,13 @@ You are accordingly called upon to pay to my client the said sum of ${rupees(d.a
 };
 
 export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> {
+  applyBrand(d.org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, d.org.logo_url);
   let page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
+  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber, logo);
 
   let y = PAGE_H - MARGIN - 70;
   const title = NOTICE_TITLES[d.noticeType];
@@ -519,7 +581,7 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   for (const para of body.split('\n\n')) {
     const lines = wrapText(para, fonts.regular, 10, PAGE_W - 2 * MARGIN);
     for (const ln of lines) {
-      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - MARGIN - 70; }
+      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber, logo); y = PAGE_H - MARGIN - 70; }
       drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
       y -= 14;
     }

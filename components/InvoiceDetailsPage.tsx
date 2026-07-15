@@ -3,6 +3,7 @@ import { Invoice } from '../types';
 import { Icons } from './Icon';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { resolveOrgBranding } from '../utils/branding';
 import { useInvoices } from '../dataStore';
 import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
@@ -32,7 +33,8 @@ export const InvoiceDetailsPage: React.FC<InvoiceDetailsPageProps> = ({
     const handleDownloadPDF = async () => {
         try {
             toast.success('Generating invoice PDF…');
-            const blob = await generateInvoicePDF(invoice, org || {});
+            const branded = (await resolveOrgBranding(org)) || {};
+            const blob = await generateInvoicePDF(invoice, branded);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

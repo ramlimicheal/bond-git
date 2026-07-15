@@ -5,6 +5,7 @@ import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import { generateProposalPDF } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { resolveOrgBranding } from '../utils/branding';
 import { useProposals } from '../dataStore';
 
 interface ProposalDetailsPageProps {
@@ -58,7 +59,8 @@ export const ProposalDetailsPage: React.FC<ProposalDetailsPageProps> = ({
     const handleDownloadPDF = async () => {
         try {
             toast.success('Generating proposal PDF...');
-            const blob = await generateProposalPDF(proposal, org || {});
+            const branded = (await resolveOrgBranding(org)) || {};
+            const blob = await generateProposalPDF(proposal, branded);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

@@ -5,6 +5,7 @@ import { toast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
 import { generateQuotePDF, downloadBlob } from '../utils/pdfGenerator';
 import { useOrg } from '../org.context';
+import { resolveOrgBranding } from '../utils/branding';
 import { useQuotes } from '../dataStore';
 
 interface QuoteDetailsPageProps {
@@ -62,7 +63,8 @@ export const QuoteDetailsPage: React.FC<QuoteDetailsPageProps> = ({
 
     const handleDownloadPDF = async () => {
         try {
-            const blob = await generateQuotePDF(quote, org || {});
+            const branded = (await resolveOrgBranding(org)) || {};
+            const blob = await generateQuotePDF(quote, branded);
             downloadBlob(blob, `Quote-${quote.number}.pdf`);
             toast.success('Quote PDF downloaded');
         } catch (e) { console.error(e); toast.error('Failed to generate PDF'); }

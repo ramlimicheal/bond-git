@@ -19,6 +19,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     const [savingAuto, setSavingAuto] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    // Branding state
+    const [logoPath, setLogoPath] = useState<string | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [brandAccent, setBrandAccent] = useState<string>('#c98a26');
+
     // Company Settings State
     const [companyName, setCompanyName] = useState('');
     const [companyEmail, setCompanyEmail] = useState('');
@@ -78,11 +84,68 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         setDefaultTaxRate(String(org.default_tax_rate ?? 18));
         setAutoNoticeEnabled(org.auto_notice_enabled ?? false);
         setAutoNoticeDays(org.auto_notice_days ?? 30);
+        const anyOrg = org as any;
+        setLogoPath(anyOrg.logo_url || null);
+        setBrandAccent(anyOrg.brand_accent || '#c98a26');
         if (org.notifications) {
             setNotifEmail(org.notifications.email || { sent: true, viewed: true, paid: true, overdue: true });
             setNotifWhatsapp(org.notifications.whatsapp || { sent: false, viewed: false, paid: false, overdue: false });
         }
     }, [org]);
+
+    // Resolve a signed preview URL whenever logoPath changes.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            if (!logoPath) { setLogoPreview(null); return; }
+            if (/^(https?:|data:)/i.test(logoPath)) { setLogoPreview(logoPath); return; }
+            const { data } = await supabase.storage.from('brand-assets').createSignedUrl(logoPath, 600);
+            if (!cancelled) setLogoPreview(data?.signedUrl || null);
+        })();
+        return () => { cancelled = true; };
+    }, [logoPath]);
+
+    const handleLogoUpload = async (file: File) => {
+        if (!orgId) { toast.error('No organization found'); return; }
+        if (file.size > 2 * 1024 * 1024) { toast.error('Logo must be under 2MB'); return; }
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+        const path = `${orgId}/logo-${Date.now()}.${ext}`;
+        setUploadingLogo(true);
+        const { error: upErr } = await supabase.storage
+            .from('brand-assets')
+            .upload(path, file, { upsert: true, contentType: file.type });
+        if (upErr) { setUploadingLogo(false); toast.error(`Upload failed: ${upErr.message}`); return; }
+        // Persist path + accent on the org row.
+        const { error } = await (supabase as any)
+            .from('organizations')
+            .update({ logo_url: path, brand_accent: brandAccent })
+            .eq('id', orgId);
+        setUploadingLogo(false);
+        if (error) { toast.error(`Could not save logo: ${error.message}`); return; }
+        setLogoPath(path);
+        await refresh();
+        toast.success('Logo uploaded');
+    };
+
+    const handleRemoveLogo = async () => {
+        if (!orgId || !logoPath) return;
+        if (!/^(https?:|data:)/i.test(logoPath)) {
+            await supabase.storage.from('brand-assets').remove([logoPath]);
+        }
+        const { error } = await (supabase as any)
+            .from('organizations').update({ logo_url: null }).eq('id', orgId);
+        if (error) { toast.error(error.message); return; }
+        setLogoPath(null);
+        await refresh();
+        toast.success('Logo removed');
+    };
+
+    const saveBrandAccent = async (hex: string) => {
+        setBrandAccent(hex);
+        if (!orgId) return;
+        await (supabase as any).from('organizations').update({ brand_accent: hex }).eq('id', orgId);
+        await refresh();
+    };
 
     const handleSave = async () => {
         if (!orgId) { toast.error('No organization found'); return; }
@@ -109,6 +172,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
             default_notes: invoiceNotes,
             default_terms: invoiceTerms,
             notifications: { email: notifEmail, whatsapp: notifWhatsapp },
+            brand_accent: brandAccent,
         };
 
         const { error } = await (supabase as any)
@@ -228,18 +292,64 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                                 <p className="text-sm text-gray-500 mt-1">This information will appear on your invoices and quotes</p>
                             </div>
 
-                            {/* Logo Upload */}
+                            {/* Branding: Logo + Accent color (used on invoice / quote / proposal PDFs) */}
                             <div className="mb-8 p-6 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg">
-                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Company Logo</label>
-                                <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600">
-                                        <Icons.Plus size={24} />
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">PDF Branding</label>
+                                <div className="flex items-start gap-6">
+                                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden">
+                                        {logoPreview ? (
+                                            <img src={logoPreview} alt="Company logo" className="max-w-full max-h-full object-contain" />
+                                        ) : (
+                                            <Icons.Plus size={24} />
+                                        )}
                                     </div>
-                                    <div>
-                                        <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                            Upload Logo
-                                        </button>
-                                        <p className="text-xs text-gray-500 mt-2">PNG, JPG up to 2MB. Recommended: 200x200px</p>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3">
+                                            <label className={`px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer ${uploadingLogo ? 'opacity-60 pointer-events-none' : ''}`}>
+                                                {uploadingLogo ? 'Uploading…' : (logoPreview ? 'Replace Logo' : 'Upload Logo')}
+                                                <input
+                                                    type="file"
+                                                    accept="image/png,image/jpeg"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const f = e.target.files?.[0];
+                                                        if (f) handleLogoUpload(f);
+                                                        e.currentTarget.value = '';
+                                                    }}
+                                                />
+                                            </label>
+                                            {logoPreview && (
+                                                <button onClick={handleRemoveLogo} className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg">
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">PNG or JPG up to 2MB. Square (200×200px) works best.</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Accent Color</label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="color"
+                                            value={brandAccent}
+                                            onChange={(e) => saveBrandAccent(e.target.value)}
+                                            className="w-14 h-14 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent cursor-pointer"
+                                            aria-label="Brand accent color"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={brandAccent}
+                                            onChange={(e) => setBrandAccent(e.target.value)}
+                                            onBlur={(e) => saveBrandAccent(e.target.value)}
+                                            placeholder="#c98a26"
+                                            className="w-32 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent"
+                                        />
+                                        <div className="flex-1">
+                                            <div className="h-3 rounded-full" style={{ background: brandAccent }} />
+                                            <p className="text-xs text-gray-500 mt-2">Used for accent rules and eyebrow labels on your invoice, quote, and proposal PDFs.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
