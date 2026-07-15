@@ -553,11 +553,13 @@ You are accordingly called upon to pay to my client the said sum of ${rupees(d.a
 };
 
 export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> {
+  applyBrand(d.org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, d.org.logo_url);
   let page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
+  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber, logo);
 
   let y = PAGE_H - MARGIN - 70;
   const title = NOTICE_TITLES[d.noticeType];
@@ -579,7 +581,7 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   for (const para of body.split('\n\n')) {
     const lines = wrapText(para, fonts.regular, 10, PAGE_W - 2 * MARGIN);
     for (const ln of lines) {
-      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - MARGIN - 70; }
+      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber, logo); y = PAGE_H - MARGIN - 70; }
       drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
       y -= 14;
     }
