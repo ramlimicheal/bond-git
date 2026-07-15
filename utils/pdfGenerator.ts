@@ -398,13 +398,15 @@ export async function generateQuotePDF(quote: Quote, org: OrgBranding = {}): Pro
 
 // ============ PROPOSAL TEMPLATE ============
 export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): Promise<Blob> {
+  applyBrand(org);
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+  const logo = await embedLogo(pdf, org.logo_url);
 
   // ===== COVER PAGE =====
   let page = pdf.addPage([PAGE_W, PAGE_H]);
   paintPaper(page);
-  drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+  drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
 
   // Large date/year set as editorial detail
   drawLabel(page, `PREPARED  ${fmtDate(new Date().toISOString())}`, MARGIN, PAGE_H - MARGIN - 60, fonts.bold, 7, COLORS.muted, 1.8);
@@ -440,7 +442,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
   if (p.sections && p.sections.length > 0) {
     page = pdf.addPage([PAGE_W, PAGE_H]);
     paintPaper(page);
-    drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+    drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
     let y = PAGE_H - MARGIN - 70;
 
     let sectionNum = 0;
@@ -450,7 +452,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
         drawFooter(page, fonts, 0, 0);
         page = pdf.addPage([PAGE_W, PAGE_H]);
         paintPaper(page);
-        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
         y = PAGE_H - MARGIN - 70;
       }
       // Section number in muted large numeral, title beside it
@@ -469,7 +471,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
             drawFooter(page, fonts, 0, 0);
             page = pdf.addPage([PAGE_W, PAGE_H]);
             paintPaper(page);
-            drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+            drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
             y = PAGE_H - MARGIN - 70;
           }
           drawText(page, ln, MARGIN + 20, y, { font: fonts.regular, size: 10.5, color: COLORS.inkSoft });
@@ -486,7 +488,7 @@ export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): P
         drawFooter(page, fonts, 0, 0);
         page = pdf.addPage([PAGE_W, PAGE_H]);
         paintPaper(page);
-        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number, logo);
         y = PAGE_H - MARGIN - 70;
       }
       drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hairStrong, 0.6);
