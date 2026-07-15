@@ -496,9 +496,10 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
   let page = pdf.addPage([PAGE_W, PAGE_H]);
-  await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
+  paintPaper(page);
+  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
 
-  let y = PAGE_H - 130;
+  let y = PAGE_H - MARGIN - 70;
   const title = NOTICE_TITLES[d.noticeType];
   const titleLines = wrapText(title, fonts.bold, 12, PAGE_W - 2 * MARGIN);
   for (const ln of titleLines) { drawText(page, ln, MARGIN, y, { font: fonts.bold, size: 12, color: COLORS.danger }); y -= 16; }
@@ -518,7 +519,7 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   for (const para of body.split('\n\n')) {
     const lines = wrapText(para, fonts.regular, 10, PAGE_W - 2 * MARGIN);
     for (const ln of lines) {
-      if (y < 100) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - 130; }
+      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - MARGIN - 70; }
       drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
       y -= 14;
     }
@@ -526,11 +527,11 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   }
 
   y -= 20;
-  if (y < 140) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); y = PAGE_H - 130; }
+  if (y < 140) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); y = PAGE_H - MARGIN - 70; }
   drawText(page, 'Yours faithfully,', MARGIN, y, { font: fonts.regular, size: 10 }); y -= 30;
   drawText(page, `For and on behalf of ${d.org.name || ''}`, MARGIN, y, { font: fonts.bold, size: 10 });
 
-  drawFooter(page, fonts);
+  drawFooter(page, fonts, 0, 0);
   const bytes = await pdf.save();
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
 }
