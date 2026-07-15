@@ -129,7 +129,7 @@ function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string,
 
   // Right: eyebrow + number hero
   drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.muted, 2.2);
-  drawText(page, `№ ${number}`, PAGE_W - MARGIN - 90, top - 22, { font: fonts.regular, size: 10, color: COLORS.ink });
+  drawText(page, `No. ${number}`, PAGE_W - MARGIN - 90, top - 22, { font: fonts.regular, size: 10, color: COLORS.ink });
 
   // Full-width hairline under masthead
   drawLine(page, MARGIN, top - 36, PAGE_W - MARGIN, top - 36, COLORS.hairStrong, 0.8);
