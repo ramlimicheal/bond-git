@@ -12,14 +12,7 @@ import {
   Gavel,
   Activity,
   Bot,
-  LineChart,
-  FolderKanban,
-  Palette,
   Users,
-  Command,
-  Rocket,
-  Briefcase,
-  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import dashboardImg from '../src/assets/landing-dashboard.jpg';
@@ -69,17 +62,6 @@ const FEATURE_BANDS = [
     ],
   },
 ] satisfies Array<{ kicker: string; title: string; desc: string; items: Array<{ icon: LucideIcon; title: string; desc: string }> }>;
-
-const ALSO_INCLUDED = [
-  { icon: LineChart, label: 'Sales & Dashboard Analytics' },
-  { icon: FolderKanban, label: 'GSTR-1 & TDS Reports' },
-  { icon: Palette, label: 'White-Label Editorial PDFs' },
-  { icon: Users, label: 'Client & Product CRM' },
-  { icon: Command, label: 'Command Palette (⌘K)' },
-  { icon: Rocket, label: 'Freelancer / Agency Onboarding' },
-  { icon: Briefcase, label: 'Lawyer Portal' },
-  { icon: ShieldCheck, label: 'India-region hosting & audit logs' },
-] satisfies Array<{ icon: LucideIcon; label: string }>;
 
 const STEPS = [
   { n: '01', title: 'Set up your studio', desc: 'Add GSTIN, upload your logo, pick a brand accent. Your PDFs go premium in minutes.' },
