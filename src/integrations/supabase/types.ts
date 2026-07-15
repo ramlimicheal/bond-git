@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log_v2: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip: unknown
+          meta: Json | null
+          org_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string
+          at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: unknown
+          meta?: Json | null
+          org_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: unknown
+          meta?: Json | null
+          org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_v2_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -51,6 +98,44 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          at: string
+          case_id: string
+          id: string
+          kind: string
+          payload: Json | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          at?: string
+          case_id: string
+          id?: string
+          kind: string
+          payload?: Json | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          at?: string
+          case_id?: string
+          id?: string
+          kind?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_notices"
             referencedColumns: ["id"]
           },
         ]
@@ -96,6 +181,41 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_users: {
+        Row: {
+          auth_user_id: string | null
+          client_id: string
+          created_at: string
+          email: string
+          id: string
+          last_login_at: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          client_id: string
+          created_at?: string
+          email: string
+          id?: string
+          last_login_at?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          client_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          last_login_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -168,6 +288,134 @@ export type Database = {
           {
             foreignKeyName: "clients_org_id_fkey"
             columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputes: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          org_id: string
+          raised_by_client_user_id: string | null
+          reason: string
+          resolution: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          org_id: string
+          raised_by_client_user_id?: string | null
+          reason: string
+          resolution?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          org_id?: string
+          raised_by_client_user_id?: string | null
+          reason?: string
+          resolution?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_raised_by_client_user_id_fkey"
+            columns: ["raised_by_client_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          enabled: boolean
+          flag: string
+          id: string
+          org_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          flag: string
+          id?: string
+          org_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          flag?: string
+          id?: string
+          org_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          admin_id: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          reason: string | null
+          started_at: string
+          target_org_id: string
+        }
+        Insert: {
+          admin_id: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          started_at?: string
+          target_org_id: string
+        }
+        Update: {
+          admin_id?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          started_at?: string
+          target_org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impersonation_sessions_target_org_id_fkey"
+            columns: ["target_org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -411,6 +659,114 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lawyer_kyc: {
+        Row: {
+          address_doc_url: string | null
+          bar_council_doc_url: string | null
+          id_doc_url: string | null
+          lawyer_id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          address_doc_url?: string | null
+          bar_council_doc_url?: string | null
+          id_doc_url?: string | null
+          lawyer_id: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          address_doc_url?: string | null
+          bar_council_doc_url?: string | null
+          id_doc_url?: string | null
+          lawyer_id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lawyer_kyc_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: true
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lawyer_kyc_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: true
+            referencedRelation: "public_lawyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lawyer_payouts: {
+        Row: {
+          created_at: string
+          gross_inr: number
+          id: string
+          lawyer_id: string
+          net_inr: number
+          paid_at: string | null
+          period_month: string
+          platform_fee_inr: number
+          razorpay_transfer_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          gross_inr?: number
+          id?: string
+          lawyer_id: string
+          net_inr?: number
+          paid_at?: string | null
+          period_month: string
+          platform_fee_inr?: number
+          razorpay_transfer_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          gross_inr?: number
+          id?: string
+          lawyer_id?: string
+          net_inr?: number
+          paid_at?: string | null
+          period_month?: string
+          platform_fee_inr?: number
+          razorpay_transfer_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lawyer_payouts_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "lawyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lawyer_payouts_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_lawyers"
             referencedColumns: ["id"]
           },
         ]
@@ -712,6 +1068,66 @@ export type Database = {
           },
         ]
       }
+      org_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          org_id: string
+          plan_code: string
+          razorpay_customer_id: string | null
+          razorpay_subscription_id: string | null
+          seats: number
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          org_id: string
+          plan_code: string
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
+          seats?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          org_id?: string
+          plan_code?: string
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
+          seats?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_subscriptions_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -941,6 +1357,116 @@ export type Database = {
           },
           {
             foreignKeyName: "payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          features: Json
+          limits: Json
+          name: string
+          price_inr_monthly: number
+          price_inr_yearly: number
+          seat_price_inr: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          features?: Json
+          limits?: Json
+          name: string
+          price_inr_monthly?: number
+          price_inr_yearly?: number
+          seat_price_inr?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          features?: Json
+          limits?: Json
+          name?: string
+          price_inr_monthly?: number
+          price_inr_yearly?: number
+          seat_price_inr?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          role: Database["public"]["Enums"]["platform_admin_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          role?: Database["public"]["Enums"]["platform_admin_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          role?: Database["public"]["Enums"]["platform_admin_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      portal_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_id: string
+          entity_type: string
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          org_id: string
+          revoked_at: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_id: string
+          entity_type: string
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          org_id: string
+          revoked_at?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          org_id?: string
+          revoked_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_tokens_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1319,6 +1845,41 @@ export type Database = {
           },
         ]
       }
+      usage_meters: {
+        Row: {
+          count: number
+          id: string
+          meter: string
+          org_id: string
+          period_month: string
+          updated_at: string
+        }
+        Insert: {
+          count?: number
+          id?: string
+          meter: string
+          org_id: string
+          period_month: string
+          updated_at?: string
+        }
+        Update: {
+          count?: number
+          id?: string
+          meter?: string
+          org_id?: string
+          period_month?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_meters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1384,6 +1945,20 @@ export type Database = {
     }
     Functions: {
       can_write_org: { Args: { _org_id: string }; Returns: boolean }
+      check_entitlement: {
+        Args: { _feature: string; _org_id: string }
+        Returns: Json
+      }
+      create_portal_token: {
+        Args: {
+          _entity_id: string
+          _entity_type: string
+          _org_id: string
+          _ttl_days?: number
+        }
+        Returns: string
+      }
+      get_portal_context: { Args: { _token: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1391,9 +1966,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_usage_meter: {
+        Args: { _delta?: number; _meter: string; _org_id: string }
+        Returns: number
+      }
       is_lawyer_of: { Args: { _lawyer_id: string }; Returns: boolean }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       lawyer_is_attached_to_org_invoice: {
         Args: { _lawyer_id: string }
         Returns: boolean
@@ -1462,8 +2042,15 @@ export type Database = {
       legal_notice_status: "draft" | "sent" | "acknowledged" | "closed"
       org_role: "owner" | "admin" | "accountant" | "viewer"
       org_type: "freelancer" | "agency"
+      platform_admin_role: "super_admin" | "support" | "lawyer_ops"
       proposal_status: "draft" | "sent" | "viewed" | "signed" | "declined"
       quote_status: "draft" | "sent" | "accepted" | "declined" | "expired"
+      subscription_status:
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "paused"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1628,8 +2215,16 @@ export const Constants = {
       legal_notice_status: ["draft", "sent", "acknowledged", "closed"],
       org_role: ["owner", "admin", "accountant", "viewer"],
       org_type: ["freelancer", "agency"],
+      platform_admin_role: ["super_admin", "support", "lawyer_ops"],
       proposal_status: ["draft", "sent", "viewed", "signed", "declined"],
       quote_status: ["draft", "sent", "accepted", "declined", "expired"],
+      subscription_status: [
+        "trialing",
+        "active",
+        "past_due",
+        "canceled",
+        "paused",
+      ],
     },
   },
 } as const
