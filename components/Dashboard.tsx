@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuotes, useProposals, useClients, useInvoices } from '../dataStore';
 import { useAuth } from '../auth.context';
 import { Icons } from './Icon';
+import { MoneyRadar } from './MoneyRadar';
+import { ActionQueue } from './ActionQueue';
 
 const fmtINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
@@ -124,6 +126,10 @@ export const DashboardPage: React.FC = () => {
         <KPI label="New Clients" value={newClients} unit="Clients" series={spark(11)} delta={`${clients.length} total`} />
         <KPI label="Quote Conversion" value={`${conversion}%`} series={spark(17)} delta={`${quotes.length} quotes`} />
       </div>
+
+      {/* Money Radar + Action Queue — the cockpit strip */}
+      <MoneyRadar />
+      <ActionQueue />
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
