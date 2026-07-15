@@ -58,6 +58,20 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
     // AI Agreement Generation
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
+    // Fair Price Engine
+    const [fpOpen, setFpOpen] = useState(false);
+    const [fpLoading, setFpLoading] = useState(false);
+    const [fpScope, setFpScope] = useState('');
+    const [fpTimeline, setFpTimeline] = useState<number>(4);
+    const [fpClientType, setFpClientType] = useState<'startup' | 'smb' | 'enterprise' | 'agency'>('smb');
+    const [fpCurrency, setFpCurrency] = useState<'INR' | 'USD'>('INR');
+    const [fpResult, setFpResult] = useState<null | {
+        range: { low: number; median: number; high: number; currency: string; symbol: string };
+        rationale: string;
+        citations: Array<{ url: string; note?: string }>;
+        markdown: string;
+    }>(null);
+
     // Signature
     const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
     const [signerName, setSignerName] = useState('');
@@ -107,6 +121,63 @@ export const CreateProposalPage: React.FC<CreateProposalPageProps> = ({ onBack, 
         } finally {
             setIsGeneratingAI(false);
         }
+    };
+
+    const handleFairPriceCheck = async () => {
+        if (!projectType) { toast.error('Choose a project type first'); return; }
+        setFpLoading(true);
+        setFpResult(null);
+        try {
+            const PROJECT_REF = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || '';
+            const FN_URL = PROJECT_REF
+                ? `https://${PROJECT_REF}.supabase.co/functions/v1/fair-price`
+                : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fair-price`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(FN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+                body: JSON.stringify({
+                    projectType,
+                    scope: fpScope,
+                    timelineWeeks: fpTimeline,
+                    clientRegion: 'india',
+                    clientType: fpClientType,
+                    currency: fpCurrency,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+            setFpResult(data);
+            toast.success('Market rates fetched');
+        } catch (e) {
+            toast.error((e as Error).message || 'Fair Price check failed');
+        } finally {
+            setFpLoading(false);
+        }
+    };
+
+    const insertFairPriceSection = () => {
+        if (!fpResult) return;
+        const newSection: ProposalSection = {
+            id: `mra-${Date.now()}`,
+            title: 'Market Rate Analysis',
+            content: fpResult.markdown,
+        };
+        // Insert before "Investment" if present, else append.
+        const idx = sections.findIndex(s => s.title.toLowerCase().includes('investment'));
+        if (idx >= 0) {
+            const next = [...sections];
+            next.splice(idx, 0, newSection);
+            setSections(next);
+        } else {
+            setSections([...sections, newSection]);
+        }
+        // Prefill totalValue with median if empty.
+        if (!totalValue && fpResult.range.currency === 'INR') {
+            setTotalValue(String(fpResult.range.median));
+        }
+        setFpOpen(false);
+        toast.success('Market Rate Analysis inserted into proposal');
     };
 
     // Signature Canvas Handlers
