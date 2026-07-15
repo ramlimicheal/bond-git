@@ -25,6 +25,7 @@ import LawyersPage from './components/LawyersPage';
 import OnboardingPage from './components/OnboardingPage';
 import LandingPage from './components/LandingPage';
 import LawyerPortalPage from './components/LawyerPortalPage';
+import AdminConsolePage from './components/AdminConsolePage';
 import { Page, Invoice, Quote, Proposal } from './types';
 import { useAuth } from './auth.context';
 import { OrgProvider, useOrg } from './org.context';
@@ -280,6 +281,7 @@ function App() {
                     <Route path="/" element={<RedirectIfAuthed><LandingPage /></RedirectIfAuthed>} />
                     <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
                     <Route path="/signup" element={<RedirectIfAuthed><Signup /></RedirectIfAuthed>} />
+                    <Route path="/admin" element={<RequireAuth><AdminConsolePage /></RequireAuth>} />
                     <Route path="/*" element={
                         <RequireAuth>
                             <AppContent />
