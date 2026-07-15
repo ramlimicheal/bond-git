@@ -10,7 +10,7 @@ const fmtINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
 /* --- Small primitives matching the Spark Pixel reference --- */
 const Card: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
-  <div className={`bg-white border border-[#E8E4D8] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] ${className}`}>
+  <div className={`bg-white border border-neutral-200 rounded-2xl ${className}`}>
     {children}
   </div>
 );
@@ -103,17 +103,17 @@ export const DashboardPage: React.FC = () => {
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="appearance-none bg-white border border-[#E8E4D8] text-[#0F172A] py-1.5 pl-3 pr-8 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-1 focus:ring-neutral-300"
+              className="appearance-none bg-white border border-neutral-200 text-[#0F172A] py-1.5 pl-3 pr-8 rounded-md text-sm font-medium focus:outline-none focus:ring-1 focus:ring-neutral-300"
             >
               <option>Weekly</option><option>Monthly</option><option>Yearly</option>
             </select>
             <Icons.ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
           </div>
-          <button className="flex items-center gap-2 bg-white border border-[#E8E4D8] text-[#0F172A] py-1.5 px-3 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#faf9f4]">
+          <button className="flex items-center gap-2 bg-white border border-neutral-200 text-[#0F172A] py-1.5 px-3 rounded-md text-sm font-medium hover:bg-[#faf9f4]">
             <Icons.Calendar size={14} className="text-gray-400" />
             {today}
           </button>
-          <button onClick={() => navigate('/invoices/new')} className="flex items-center gap-2 bg-[#1A1A1A] text-white py-1.5 px-4 rounded-md text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#333333]">
+          <button onClick={() => navigate('/invoices/new')} className="flex items-center gap-2 bg-[#1A1A1A] text-white py-1.5 px-4 rounded-md text-sm font-medium hover:bg-[#333333]">
             <Icons.Plus size={14} /> New Invoice
           </button>
         </div>
@@ -158,7 +158,7 @@ export const DashboardPage: React.FC = () => {
                 <button
                   key={r}
                   onClick={() => setRange(r)}
-                  className={`px-3 py-1 text-xs font-medium rounded-sm ${range === r ? 'bg-white text-[#0F172A] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-3 py-1 text-xs font-medium rounded-sm ${range === r ? 'bg-white text-[#0F172A] border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
                 >{r}</button>
               ))}
             </div>
