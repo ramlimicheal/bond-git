@@ -80,13 +80,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
       <aside
         className={`fixed md:static inset-y-0 left-0 z-50 w-[248px] shrink-0 h-full
           flex flex-col justify-between py-4 px-3
-          bg-[#F1EFE8] border-r border-[#E8E4D8]
+          bg-[#faf9f4] border-r border-neutral-200
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           {/* Org selector */}
-          <div className="flex items-center justify-between bg-white border border-[#E5E5E5] rounded-lg p-2 mb-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-2 mb-5">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 bg-[#1A1A1A] rounded-md flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {orgInitial}
@@ -112,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
                       onClick={() => handleNav(item.page)}
                       className={`w-full flex items-center gap-3 px-2 py-2 rounded-md text-[13px] font-medium transition-colors
                         ${active
-                          ? 'bg-white text-[#0F172A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-gray-100'
+                          ? 'bg-white text-[#0F172A] border border-gray-100'
                           : 'text-[#808080] hover:bg-gray-100/70 hover:text-[#1A1A1A]'}`}
                     >
                       {Ico ? <Ico size={16} /> : null}
@@ -126,8 +126,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentPage, 
         </div>
 
         {/* User profile card */}
-        <div className="pt-3 border-t border-[#E5E5E5]">
-          <div className="flex items-center justify-between bg-white border border-[#E5E5E5] rounded-lg p-2 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div className="pt-3 border-t border-neutral-200">
+          <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-2">
             <div className="flex items-center gap-2 min-w-0">
               <div className="relative shrink-0">
                 <div className="w-8 h-8 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center font-semibold text-sm">
