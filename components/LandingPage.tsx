@@ -181,7 +181,51 @@ const LogoMarquee: React.FC = () => (
   </section>
 );
 
-const DashboardShowcase: React.FC = () => null;
+const DashboardShowcase: React.FC = () => (
+  <section id="product" aria-label="Product showcase" className="bg-white py-24 px-6">
+    <div className="max-w-6xl mx-auto">
+      <div className="text-center max-w-2xl mx-auto mb-12">
+        <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">The product</p>
+        <h2
+          className="text-4xl md:text-5xl tracking-tight text-neutral-900"
+          style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}
+        >
+          See Billenty <em className="italic">in motion</em>
+        </h2>
+        <p className="mt-4 text-neutral-600">
+          A quick tour of the dashboard, invoice builder, client portal and the legal recovery flow.
+        </p>
+      </div>
+      <div
+        className="relative rounded-3xl border border-neutral-200 bg-neutral-50 overflow-hidden"
+        style={{ aspectRatio: '16 / 9' }}
+      >
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center px-6">
+            <div className="inline-flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-neutral-500 bg-white border border-neutral-200 rounded-full px-3 py-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              Product tour coming soon
+            </div>
+            <p
+              className="mt-6 text-2xl md:text-3xl text-neutral-800"
+              style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}
+            >
+              Reserved space for the live product walkthrough.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
 
 const Features: React.FC = () => (
   <section id="features" className="py-24 px-6 bg-white">
