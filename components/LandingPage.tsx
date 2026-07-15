@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import dashboardImg from '../src/assets/landing-dashboard.jpg';
+import LandingBento from './LandingBento';
 
 const NAV = [
   { label: 'Features', href: '#features' },
@@ -338,17 +339,6 @@ const Features: React.FC = () => (
         ))}
       </div>
 
-      <div className="mt-20 pt-12 border-t border-neutral-200">
-        <p className="text-xs font-semibold text-neutral-500 tracking-widest uppercase mb-6">Also included in every plan</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {ALSO_INCLUDED.map((x) => (
-            <div key={x.label} className="flex items-center gap-3 bg-[#faf9f4] rounded-xl px-4 py-3 text-sm text-neutral-800">
-              <x.icon className="w-4 h-4 text-orange-600 shrink-0" strokeWidth={1.75} />
-              <span>{x.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   </section>
 );
