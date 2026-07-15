@@ -12,13 +12,50 @@ const NAV = [
 
 const LOGOS = ['Grammarly', 'Mailchimp', 'Framer', 'Gumroad', 'Webflow', 'GitHub', 'Shopify', 'Notion'];
 
-const FEATURES = [
-  { icon: '🧾', title: 'GST-Ready Invoicing', desc: 'CGST, SGST, IGST split automatically. Place of supply, HSN/SAC — handled per invoice.' },
-  { icon: '✨', title: 'AI Proposals & Quotes', desc: 'Draft studio-grade proposals in seconds. Polish scope, terms, and pricing with one click.' },
-  { icon: '⚖️', title: 'Legal Backbone', desc: 'Every overdue invoice ships with an auto-drafted demand notice a real lawyer can sign.' },
-  { icon: '🔗', title: 'Client Portal', desc: 'Clients view, e-sign and pay through a branded portal — no more email ping-pong.' },
-  { icon: '💳', title: 'UPI & Cards', desc: 'Collect via UPI, cards, and net banking. Reconciliation is automatic, not a spreadsheet.' },
-  { icon: '👩‍⚖️', title: 'Lawyer Marketplace', desc: 'On-demand Indian lawyers to send notices, chase payments, and escalate when needed.' },
+const FEATURE_BANDS = [
+  {
+    kicker: '01 — Get quoted fairly',
+    title: 'Stop underpricing on WhatsApp',
+    desc: 'Walk into every conversation with real market data, tight scope and a proposal that closes itself.',
+    items: [
+      { icon: '🧭', title: 'Fair Price Engine', desc: 'Firecrawl-powered market intelligence. Type your scope — get a defensible low / median / high range with cited sources from Behance, Upwork, agency rate cards and design communities. Auto-inserted into your proposal PDF.' },
+      { icon: '✨', title: 'AI Proposals & Quotes', desc: 'Studio-grade proposals in under 60 seconds. AI drafts scope, deliverables, timeline and terms — you approve and send. Every proposal is signable in the client portal.' },
+      { icon: '🔒', title: 'Scope-Lock Clauses', desc: 'Auto-generated "what\u2019s included, what\u2019s not, revision limits" clauses on every proposal. 80% of freelancer disputes are scope creep, not bad clients. Kill them before they start.' },
+    ],
+  },
+  {
+    kicker: '02 — Get paid properly',
+    title: 'Money in the bank, not in your inbox',
+    desc: 'Invoicing, portal, payments and reconciliation — one workflow, zero spreadsheets.',
+    items: [
+      { icon: '🧾', title: 'GST-Ready Invoicing', desc: 'CGST / SGST / IGST split automatically. GSTIN validation, HSN / SAC codes, place of supply, TDS handling and e-invoicing readiness — all native to India.' },
+      { icon: '🚪', title: 'Milestone-Gated Client Portal', desc: 'Your client sees the project, deliverables and invoices in a branded portal — but the next milestone\u2019s files stay locked until the previous one is paid. Withheld files are your daily leverage.' },
+      { icon: '💳', title: 'UPI, Cards & Auto-Reconciliation', desc: 'Collect via UPI, Razorpay, cards and net banking. Payments auto-match to invoices the moment they land. No more end-of-month spreadsheet nights.' },
+      { icon: '⏰', title: 'Smart Reminder Engine', desc: 'Polite → firm → final. Email + WhatsApp reminders on your schedule, in your voice, escalating automatically until the invoice is paid.' },
+    ],
+  },
+  {
+    kicker: '03 — Get paid even when they ghost you',
+    title: 'The legal backbone Indian freelancers never had',
+    desc: 'Auto-drafted notices, real lawyers on tap, and a payment risk score for every client.',
+    items: [
+      { icon: '⚖️', title: 'Auto-Drafted Legal Notices', desc: 'Every overdue invoice becomes an India-specific demand notice — Section 138 memos, arbitration references, GST-attached breakdowns. Ready to send in one click.' },
+      { icon: '👩\u200d⚖️', title: 'Lawyer Marketplace', desc: 'Empanelled Indian lawyers sign and dispatch your notice on their letterhead. Most silent clients pay within 48\u201372 hours of a signed notice.' },
+      { icon: '📊', title: 'Payment Health Score', desc: 'After 2\u20133 invoices with a client, we surface avg days-to-pay, dispute rate and red flags — so you can price risk into future quotes.' },
+      { icon: '🤖', title: 'Auto-Notice Scheduler', desc: 'Set it once. Overdue → reminder → notice → lawyer, running while you sleep. You only step in when there\u2019s a decision to make.' },
+    ],
+  },
+];
+
+const ALSO_INCLUDED = [
+  { icon: '📈', label: 'Sales & Dashboard Analytics' },
+  { icon: '🗂️', label: 'GSTR-1 & TDS Reports' },
+  { icon: '🎨', label: 'White-Label Editorial PDFs' },
+  { icon: '👥', label: 'Client & Product CRM' },
+  { icon: '⌘', label: 'Command Palette (⌘K)' },
+  { icon: '🚀', label: 'Freelancer / Agency Onboarding' },
+  { icon: '🧑\u200d💼', label: 'Lawyer Portal' },
+  { icon: '🔐', label: 'India-region hosting & audit logs' },
 ];
 
 const STEPS = [
@@ -247,18 +284,46 @@ const Features: React.FC = () => (
   <section id="features" className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
       <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">Features</p>
-      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-        Everything you need to <em className="italic">get paid</em>
+      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-3xl leading-[1.05]" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Everything an Indian design freelancer needs to <em className="italic">get paid</em> — and nothing they don&rsquo;t.
       </h2>
-      <p className="mt-4 text-neutral-600 max-w-2xl">One platform to bill clients, collect payments, and enforce them — built for Indian designers.</p>
-      <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="p-8 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow">
-            <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-5">{f.icon}</div>
-            <h3 className="font-display text-lg font-semibold text-neutral-900 mb-2">{f.title}</h3>
-            <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
+      <p className="mt-4 text-neutral-600 max-w-2xl">
+        Billenty is not a generic invoice tool. It is a three-stage system: price your work fairly, collect payments cleanly, and recover the ones that go silent — with real legal muscle behind you.
+      </p>
+
+      <div className="mt-16 space-y-20">
+        {FEATURE_BANDS.map((band) => (
+          <div key={band.kicker}>
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">{band.kicker}</p>
+              <h3 className="text-3xl md:text-4xl tracking-tight text-neutral-900 leading-[1.1]" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+                {band.title}
+              </h3>
+              <p className="mt-3 text-neutral-600">{band.desc}</p>
+            </div>
+            <div className={`mt-8 grid gap-6 ${band.items.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {band.items.map((f) => (
+                <div key={f.title} className="p-6 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow flex flex-col">
+                  <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-4">{f.icon}</div>
+                  <h4 className="font-display text-base font-semibold text-neutral-900 mb-2">{f.title}</h4>
+                  <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-20 pt-12 border-t border-neutral-200">
+        <p className="text-xs font-semibold text-neutral-500 tracking-widest uppercase mb-6">Also included in every plan</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {ALSO_INCLUDED.map((x) => (
+            <div key={x.label} className="flex items-center gap-3 bg-[#faf9f4] rounded-xl px-4 py-3 text-sm text-neutral-800">
+              <span className="text-lg">{x.icon}</span>
+              <span>{x.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   </section>
