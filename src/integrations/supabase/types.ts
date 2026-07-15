@@ -1944,6 +1944,25 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_orgs: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_period_end: string
+          invoice_count: number
+          member_count: number
+          monthly_price_inr: number
+          org_id: string
+          org_name: string
+          plan_code: string
+          plan_name: string
+          proposal_count: number
+          quote_count: number
+          subscription_status: string
+        }[]
+      }
+      admin_mrr_summary: { Args: never; Returns: Json }
+      bootstrap_first_platform_admin: { Args: never; Returns: boolean }
       can_write_org: { Args: { _org_id: string }; Returns: boolean }
       check_entitlement: {
         Args: { _feature: string; _org_id: string }
