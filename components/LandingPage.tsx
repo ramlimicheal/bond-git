@@ -284,18 +284,46 @@ const Features: React.FC = () => (
   <section id="features" className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
       <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">Features</p>
-      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
-        Everything you need to <em className="italic">get paid</em>
+      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-3xl leading-[1.05]" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Everything an Indian design freelancer needs to <em className="italic">get paid</em> — and nothing they don&rsquo;t.
       </h2>
-      <p className="mt-4 text-neutral-600 max-w-2xl">One platform to bill clients, collect payments, and enforce them — built for Indian designers.</p>
-      <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="p-8 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow">
-            <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-5">{f.icon}</div>
-            <h3 className="font-display text-lg font-semibold text-neutral-900 mb-2">{f.title}</h3>
-            <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
+      <p className="mt-4 text-neutral-600 max-w-2xl">
+        Billenty is not a generic invoice tool. It is a three-stage system: price your work fairly, collect payments cleanly, and recover the ones that go silent — with real legal muscle behind you.
+      </p>
+
+      <div className="mt-16 space-y-20">
+        {FEATURE_BANDS.map((band) => (
+          <div key={band.kicker}>
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">{band.kicker}</p>
+              <h3 className="text-3xl md:text-4xl tracking-tight text-neutral-900 leading-[1.1]" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+                {band.title}
+              </h3>
+              <p className="mt-3 text-neutral-600">{band.desc}</p>
+            </div>
+            <div className={`mt-8 grid gap-6 ${band.items.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {band.items.map((f) => (
+                <div key={f.title} className="p-6 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow flex flex-col">
+                  <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-4">{f.icon}</div>
+                  <h4 className="font-display text-base font-semibold text-neutral-900 mb-2">{f.title}</h4>
+                  <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-20 pt-12 border-t border-neutral-200">
+        <p className="text-xs font-semibold text-neutral-500 tracking-widest uppercase mb-6">Also included in every plan</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {ALSO_INCLUDED.map((x) => (
+            <div key={x.label} className="flex items-center gap-3 bg-[#faf9f4] rounded-xl px-4 py-3 text-sm text-neutral-800">
+              <span className="text-lg">{x.icon}</span>
+              <span>{x.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   </section>
