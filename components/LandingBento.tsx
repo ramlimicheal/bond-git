@@ -73,7 +73,6 @@ const PricePill: React.FC<{ scope: string; low: string; high: string }> = ({ sco
   </div>
 );
 
-const FairPriceVisual: React.FC = () => (
 const MarqueeRow: React.FC<{ reverse?: boolean; duration: number; rows: typeof priceRows }> = ({
   reverse = false,
   duration,
