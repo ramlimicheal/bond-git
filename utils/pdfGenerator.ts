@@ -2,19 +2,26 @@ import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
 import QRCode from 'qrcode';
 import type { Invoice, Proposal, Quote } from '../types';
 
-// ===== Design tokens =====
+// ===== Editorial design tokens =====
+// Monochrome ink on warm paper. One micro-accent used sparingly.
 const COLORS = {
-  text: rgb(0.1, 0.1, 0.12),
-  muted: rgb(0.45, 0.45, 0.5),
-  line: rgb(0.85, 0.85, 0.88),
-  accent: rgb(0.06, 0.4, 0.85),
-  brandBg: rgb(0.97, 0.97, 0.99),
-  danger: rgb(0.8, 0.13, 0.13),
+  ink: rgb(0.07, 0.07, 0.08),          // near-black body
+  inkSoft: rgb(0.20, 0.20, 0.22),      // secondary
+  muted: rgb(0.48, 0.48, 0.52),        // labels
+  faint: rgb(0.72, 0.72, 0.74),        // meta
+  hair: rgb(0.86, 0.86, 0.88),         // hairline rules
+  hairStrong: rgb(0.20, 0.20, 0.22),   // heavy rules
+  paper: rgb(0.987, 0.983, 0.973),     // off-white bg
+  accent: rgb(0.75, 0.55, 0.15),       // ochre/brass
+  paid: rgb(0.13, 0.45, 0.25),
+  danger: rgb(0.72, 0.12, 0.12),
+  white: rgb(1, 1, 1),
 };
 
-const MARGIN = 48;
+const MARGIN = 56;
 const PAGE_W = 595.28; // A4
 const PAGE_H = 841.89;
+const CONTENT_W = PAGE_W - MARGIN * 2;
 
 // pdf-lib's StandardFonts use WinAnsi encoding, which cannot encode characters
 // like ₹ (U+20B9), curly quotes, em-dashes, etc. Embedding a Unicode TTF would
@@ -60,49 +67,98 @@ async function loadFonts(pdf: PDFDocument) {
 
 function drawText(page: PDFPage, text: string, x: number, y: number, opts: { font: PDFFont; size?: number; color?: ReturnType<typeof rgb>; maxWidth?: number } = {} as any) {
   const size = opts.size ?? 10;
-  const color = opts.color ?? COLORS.text;
+  const color = opts.color ?? COLORS.ink;
   page.drawText(sanitize(text), { x, y, size, font: opts.font, color });
 }
 
-function drawLine(page: PDFPage, x1: number, y1: number, x2: number, y2: number, color = COLORS.line) {
-  page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color, thickness: 0.7 });
+function drawLine(page: PDFPage, x1: number, y1: number, x2: number, y2: number, color = COLORS.hair, thickness = 0.5) {
+  page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color, thickness });
+}
+
+// Draw text right-aligned to `xRight`. Essential for tabular numerics.
+function drawRight(page: PDFPage, text: string, xRight: number, y: number, opts: { font: PDFFont; size?: number; color?: ReturnType<typeof rgb> }) {
+  const size = opts.size ?? 10;
+  const s = sanitize(text);
+  const w = opts.font.widthOfTextAtSize(s, size);
+  page.drawText(s, { x: xRight - w, y, size, font: opts.font, color: opts.color ?? COLORS.ink });
+}
+
+// Letter-spaced tiny caps label (e.g. "BILL TO"). pdf-lib has no tracking API,
+// so we splice zero-width joiners via inter-character kerning by drawing char-by-char.
+function drawLabel(page: PDFPage, text: string, x: number, y: number, font: PDFFont, size = 7.5, color = COLORS.muted, tracking = 1.6) {
+  const s = sanitize(text).toUpperCase();
+  let cx = x;
+  for (const ch of s) {
+    page.drawText(ch, { x: cx, y, size, font, color });
+    cx += font.widthOfTextAtSize(ch, size) + tracking;
+  }
+}
+
+// Paint a full-page paper background.
+function paintPaper(page: PDFPage) {
+  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: COLORS.paper });
 }
 
 function rupees(n: number) {
-  return `INR ${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `INR  ${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function amountOnly(n: number) {
+  return Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtDate(s: string | null | undefined) {
-  if (!s) return '—';
+  if (!s) return '-';
   const d = new Date(s);
   if (isNaN(d.getTime())) return s;
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
 }
 
-async function drawHeader(page: PDFPage, fonts: any, org: OrgBranding, title: string, number: string) {
-  // Brand band
-  page.drawRectangle({ x: 0, y: PAGE_H - 90, width: PAGE_W, height: 90, color: COLORS.brandBg });
-  // Logo square
-  page.drawRectangle({ x: MARGIN, y: PAGE_H - 70, width: 40, height: 40, color: COLORS.text });
-  drawText(page, 'B', MARGIN + 13, PAGE_H - 58, { font: fonts.bold, size: 22, color: rgb(1, 1, 1) });
+// ============ Editorial masthead ============
+// Kind: "INVOICE" / "QUOTE" / "PROPOSAL" — set as tiny caps eyebrow.
+// The document NUMBER is the typographic hero.
+function drawMasthead(page: PDFPage, fonts: any, org: OrgBranding, kind: string, number: string) {
+  const top = PAGE_H - MARGIN;
 
-  drawText(page, (org.name || 'Your Company').toUpperCase(), MARGIN + 56, PAGE_H - 42, { font: fonts.bold, size: 13 });
-  if (org.gstin) drawText(page, `GSTIN ${org.gstin}`, MARGIN + 56, PAGE_H - 58, { font: fonts.regular, size: 9, color: COLORS.muted });
-  if (org.email) drawText(page, org.email, MARGIN + 56, PAGE_H - 72, { font: fonts.regular, size: 9, color: COLORS.muted });
+  // Left: monogram + wordmark
+  const monoSize = 22;
+  page.drawRectangle({ x: MARGIN, y: top - monoSize, width: monoSize, height: monoSize, color: COLORS.ink });
+  drawText(page, 'B', MARGIN + 6.5, top - monoSize + 5.5, { font: fonts.bold, size: 14, color: COLORS.paper });
+  drawText(page, (org.name || 'Your Company').toUpperCase(), MARGIN + monoSize + 10, top - 12, { font: fonts.bold, size: 10 });
+  drawText(page, org.legal_name || 'Independent Studio', MARGIN + monoSize + 10, top - 22, { font: fonts.regular, size: 8, color: COLORS.muted });
 
-  // Title block (right)
-  drawText(page, title.toUpperCase(), PAGE_W - MARGIN - 130, PAGE_H - 42, { font: fonts.bold, size: 22, color: COLORS.accent });
-  drawText(page, `# ${number}`, PAGE_W - MARGIN - 130, PAGE_H - 60, { font: fonts.regular, size: 10, color: COLORS.muted });
+  // Right: eyebrow + number hero
+  drawLabel(page, kind, PAGE_W - MARGIN - 90, top - 4, fonts.bold, 7.5, COLORS.muted, 2.2);
+  drawText(page, `No. ${number}`, PAGE_W - MARGIN - 90, top - 22, { font: fonts.regular, size: 10, color: COLORS.ink });
+
+  // Full-width hairline under masthead
+  drawLine(page, MARGIN, top - 36, PAGE_W - MARGIN, top - 36, COLORS.hairStrong, 0.8);
 }
 
-function drawFooter(page: PDFPage, fonts: any) {
-  drawLine(page, MARGIN, 50, PAGE_W - MARGIN, 50);
-  drawText(page, 'Generated by BILLENTY  ·  Get paid. Guaranteed.', MARGIN, 32, { font: fonts.italic, size: 8, color: COLORS.muted });
-  drawText(page, 'billenty.app', PAGE_W - MARGIN - 60, 32, { font: fonts.regular, size: 8, color: COLORS.muted });
+function drawFooter(page: PDFPage, fonts: any, pageNum = 1, total = 1) {
+  drawLine(page, MARGIN, MARGIN - 12, PAGE_W - MARGIN, MARGIN - 12, COLORS.hair, 0.4);
+  drawLabel(page, 'BILLENTY  ·  BILLING & LEGAL FOR INDIAN STUDIOS', MARGIN, MARGIN - 26, fonts.regular, 6.5, COLORS.faint, 1.4);
+  drawRight(page, `${pageNum} / ${total}`, PAGE_W - MARGIN, MARGIN - 26, { font: fonts.regular, size: 7.5, color: COLORS.faint });
+}
+
+// Diagonal status watermark (PAID / OVERDUE / DRAFT) — extremely subtle
+function drawWatermark(page: PDFPage, fonts: any, label: string, color = COLORS.faint) {
+  const size = 96;
+  const s = sanitize(label).toUpperCase();
+  const w = fonts.bold.widthOfTextAtSize(s, size);
+  page.drawText(s, {
+    x: (PAGE_W - w) / 2,
+    y: PAGE_H / 2 - size / 2,
+    size,
+    font: fonts.bold,
+    color,
+    opacity: 0.06,
+    rotate: { type: 'degrees', angle: -18 } as any,
+  });
 }
 
 async function embedQR(pdf: PDFDocument, text: string) {
-  const dataUrl = await QRCode.toDataURL(text, { margin: 0, width: 200 });
+  const dataUrl = await QRCode.toDataURL(text, { margin: 0, width: 240, errorCorrectionLevel: 'M' });
   const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]), (c) => c.charCodeAt(0));
   return pdf.embedPng(bytes);
 }
@@ -115,87 +171,128 @@ async function buildInvoiceLikePDF(
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
   const page = pdf.addPage([PAGE_W, PAGE_H]);
+  paintPaper(page);
+  drawMasthead(page, fonts, org, doc.kind, doc.number);
 
-  await drawHeader(page, fonts, org, doc.kind, doc.number);
+  // Subtle status watermark
+  const st = (doc.status || 'draft').toUpperCase();
+  if (['PAID', 'OVERDUE', 'DRAFT', 'CANCELLED'].includes(st)) {
+    drawWatermark(page, fonts, st, st === 'PAID' ? COLORS.paid : st === 'OVERDUE' ? COLORS.danger : COLORS.faint);
+  }
 
-  // Status pill
-  const pillX = PAGE_W - MARGIN - 130;
-  const status = doc.status || 'draft';
-  page.drawRectangle({ x: pillX, y: PAGE_H - 80, width: 70, height: 16, color: status.toLowerCase() === 'paid' ? rgb(0.15, 0.6, 0.2) : COLORS.text });
-  drawText(page, status.toUpperCase(), pillX + 8, PAGE_H - 76, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
+  // ===== Document title zone =====
+  // Kind headline in generous display size (typographic hero of the page)
+  let y = PAGE_H - MARGIN - 70;
+  drawText(page, doc.kind === 'INVOICE' ? 'Invoice.' : 'Quotation.', MARGIN, y, { font: fonts.bold, size: 40, color: COLORS.ink });
 
-  let y = PAGE_H - 130;
+  // Right-side metadata grid (Issued / Due / Amount)
+  const metaX = PAGE_W - MARGIN - 220;
+  const col1 = metaX;
+  const col2 = metaX + 110;
+  drawLabel(page, doc.dateLabel, col1, y + 24, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, fmtDate(doc.dateValue), col1, y + 10, { font: fonts.regular, size: 9.5 });
+  drawLabel(page, doc.dueLabel, col2, y + 24, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, fmtDate(doc.dueValue), col2, y + 10, { font: fonts.regular, size: 9.5 });
 
-  // Bill To
-  drawText(page, 'BILL TO', MARGIN, y, { font: fonts.bold, size: 9, color: COLORS.muted });
-  drawText(page, doc.clientName || '—', MARGIN, y - 16, { font: fonts.bold, size: 12 });
-  drawText(page, doc.clientType || '', MARGIN, y - 30, { font: fonts.regular, size: 10, color: COLORS.muted });
+  // Amount due callout (top-right)
+  drawLabel(page, doc.kind === 'INVOICE' ? 'AMOUNT DUE' : 'QUOTE TOTAL', col1, y - 8, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, `Rs. ${amountOnly((doc.amountPaid !== undefined ? doc.total - doc.amountPaid : doc.total))}`, col1, y - 26, { font: fonts.bold, size: 18, color: COLORS.ink });
 
-  // Dates (right)
-  const dx = PAGE_W - MARGIN - 180;
-  drawText(page, doc.dateLabel.toUpperCase(), dx, y, { font: fonts.bold, size: 9, color: COLORS.muted });
-  drawText(page, fmtDate(doc.dateValue), dx, y - 14, { font: fonts.regular, size: 10 });
-  drawText(page, doc.dueLabel.toUpperCase(), dx + 90, y, { font: fonts.bold, size: 9, color: COLORS.muted });
-  drawText(page, fmtDate(doc.dueValue), dx + 90, y - 14, { font: fonts.regular, size: 10 });
+  y -= 60;
+  drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hair, 0.4);
+  y -= 24;
 
-  y -= 70;
+  // ===== From / To block =====
+  const colW = CONTENT_W / 2 - 12;
+  drawLabel(page, 'FROM', MARGIN, y, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, (org.name || 'Your Company'), MARGIN, y - 16, { font: fonts.bold, size: 11 });
+  if (org.gstin) drawText(page, `GSTIN  ${org.gstin}`, MARGIN, y - 30, { font: fonts.regular, size: 9, color: COLORS.inkSoft });
+  if (org.email) drawText(page, org.email, MARGIN, y - 42, { font: fonts.regular, size: 9, color: COLORS.muted });
+  if (org.phone) drawText(page, org.phone, MARGIN, y - 54, { font: fonts.regular, size: 9, color: COLORS.muted });
 
-  // Items table header
-  page.drawRectangle({ x: MARGIN, y: y - 4, width: PAGE_W - 2 * MARGIN, height: 22, color: COLORS.text });
-  drawText(page, 'DESCRIPTION', MARGIN + 10, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
-  drawText(page, 'QTY', PAGE_W - MARGIN - 200, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
-  drawText(page, 'RATE', PAGE_W - MARGIN - 150, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
-  drawText(page, 'AMOUNT', PAGE_W - MARGIN - 70, y + 4, { font: fonts.bold, size: 9, color: rgb(1, 1, 1) });
-  y -= 30;
+  const toX = MARGIN + colW + 24;
+  drawLabel(page, 'BILLED TO', toX, y, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, doc.clientName || '-', toX, y - 16, { font: fonts.bold, size: 11 });
+  drawText(page, doc.clientType || '', toX, y - 30, { font: fonts.regular, size: 9, color: COLORS.inkSoft });
+
+  y -= 84;
+
+  // ===== Line items table =====
+  // Column geometry: description | qty | rate | amount
+  const cQty = PAGE_W - MARGIN - 250;
+  const cRate = PAGE_W - MARGIN - 160;
+  const cAmt = PAGE_W - MARGIN; // right edge for right-alignment
+
+  drawLabel(page, 'DESCRIPTION', MARGIN, y, fonts.bold, 7, COLORS.muted, 1.8);
+  drawRight(page, 'QTY', cQty + 30, y, { font: fonts.bold, size: 7, color: COLORS.muted });
+  drawRight(page, 'RATE', cRate + 50, y, { font: fonts.bold, size: 7, color: COLORS.muted });
+  drawRight(page, 'AMOUNT', cAmt, y, { font: fonts.bold, size: 7, color: COLORS.muted });
+  y -= 8;
+  drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hairStrong, 0.8);
+  y -= 18;
 
   for (const it of doc.items) {
-    drawText(page, it.description || '—', MARGIN + 10, y, { font: fonts.regular, size: 10 });
-    drawText(page, String(it.quantity), PAGE_W - MARGIN - 200, y, { font: fonts.regular, size: 10 });
-    drawText(page, rupees(it.price), PAGE_W - MARGIN - 150, y, { font: fonts.regular, size: 10 });
-    drawText(page, rupees(it.quantity * it.price), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
-    y -= 20;
-    drawLine(page, MARGIN, y + 8, PAGE_W - MARGIN, y + 8);
+    const descLines = wrapText(it.description || '-', fonts.regular, 10, cQty - MARGIN - 20);
+    const rowH = Math.max(22, descLines.length * 13 + 8);
+    // description (wrap)
+    let ly = y;
+    for (const ln of descLines) {
+      drawText(page, ln, MARGIN, ly, { font: fonts.regular, size: 10 });
+      ly -= 13;
+    }
+    drawRight(page, String(it.quantity), cQty + 30, y, { font: fonts.regular, size: 10, color: COLORS.inkSoft });
+    drawRight(page, amountOnly(it.price), cRate + 50, y, { font: fonts.regular, size: 10, color: COLORS.inkSoft });
+    drawRight(page, amountOnly(it.quantity * it.price), cAmt, y, { font: fonts.bold, size: 10 });
+    y -= rowH;
+    drawLine(page, MARGIN, y + 8, PAGE_W - MARGIN, y + 8, COLORS.hair, 0.3);
   }
 
-  y -= 10;
+  // ===== Totals ledger (right-aligned) =====
+  y -= 12;
+  const tLabelX = PAGE_W - MARGIN - 200;
+  const drawTotalRow = (label: string, value: string, opts: { bold?: boolean; color?: any; size?: number } = {}) => {
+    const size = opts.size ?? 10;
+    drawText(page, label, tLabelX, y, { font: opts.bold ? fonts.bold : fonts.regular, size, color: opts.color ?? COLORS.muted });
+    drawRight(page, value, cAmt, y, { font: opts.bold ? fonts.bold : fonts.regular, size, color: opts.color ?? COLORS.ink });
+    y -= size + 6;
+  };
 
-  // Totals
-  const tx = PAGE_W - MARGIN - 200;
-  drawText(page, 'Subtotal', tx, y, { font: fonts.regular, size: 10, color: COLORS.muted });
-  drawText(page, rupees(doc.subtotal), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
-  y -= 16;
-  drawText(page, 'Tax (GST 18%)', tx, y, { font: fonts.regular, size: 10, color: COLORS.muted });
-  drawText(page, rupees(doc.tax), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10 });
-  y -= 18;
-  drawLine(page, tx, y + 6, PAGE_W - MARGIN, y + 6, COLORS.text);
-  drawText(page, 'TOTAL', tx, y - 8, { font: fonts.bold, size: 12 });
-  drawText(page, rupees(doc.total), PAGE_W - MARGIN - 80, y - 8, { font: fonts.bold, size: 12, color: COLORS.accent });
+  drawTotalRow('Subtotal', amountOnly(doc.subtotal));
+  drawTotalRow('GST @ 18%', amountOnly(doc.tax));
+  y -= 4;
+  drawLine(page, tLabelX, y + 10, PAGE_W - MARGIN, y + 10, COLORS.hairStrong, 0.6);
+  y -= 4;
+  // Grand total row — larger, ink-heavy
+  drawText(page, 'TOTAL', tLabelX, y, { font: fonts.bold, size: 11, color: COLORS.ink });
+  drawRight(page, `Rs. ${amountOnly(doc.total)}`, cAmt, y, { font: fonts.bold, size: 14, color: COLORS.ink });
+  y -= 22;
 
   if (doc.amountPaid !== undefined && doc.amountPaid > 0) {
-    y -= 28;
-    drawText(page, 'Paid', tx, y, { font: fonts.regular, size: 10, color: rgb(0.15, 0.6, 0.2) });
-    drawText(page, rupees(doc.amountPaid), PAGE_W - MARGIN - 70, y, { font: fonts.regular, size: 10, color: rgb(0.15, 0.6, 0.2) });
-    y -= 14;
-    drawText(page, 'Balance Due', tx, y, { font: fonts.bold, size: 10 });
-    drawText(page, rupees(doc.total - doc.amountPaid), PAGE_W - MARGIN - 70, y, { font: fonts.bold, size: 10, color: COLORS.danger });
+    drawTotalRow('Amount paid', amountOnly(doc.amountPaid), { color: COLORS.paid });
+    drawTotalRow('Balance due', amountOnly(doc.total - doc.amountPaid), { bold: true, color: COLORS.danger, size: 11 });
   }
 
-  // Payment section with UPI QR
-  if (doc.kind === 'INVOICE' && org.upi_vpa) {
-    const py = 140;
-    drawLine(page, MARGIN, py + 70, PAGE_W - MARGIN, py + 70);
-    drawText(page, 'PAY VIA UPI', MARGIN, py + 50, { font: fonts.bold, size: 10 });
-    drawText(page, org.upi_vpa, MARGIN, py + 34, { font: fonts.regular, size: 10, color: COLORS.muted });
-    drawText(page, 'Scan to pay any UPI app (GPay, PhonePe, Paytm)', MARGIN, py + 18, { font: fonts.italic, size: 8, color: COLORS.muted });
-
-    try {
-      const upiUri = `upi://pay?pa=${encodeURIComponent(org.upi_vpa)}&pn=${encodeURIComponent(org.name || '')}&am=${doc.total - (doc.amountPaid || 0)}&tn=${encodeURIComponent(doc.number)}&cu=INR`;
-      const qrImg = await embedQR(pdf, upiUri);
-      page.drawImage(qrImg, { x: PAGE_W - MARGIN - 80, y: py, width: 80, height: 80 });
-    } catch { /* ignore qr failures */ }
+  // ===== Payment strip (UPI + QR) =====
+  if (doc.kind === 'INVOICE') {
+    const py = MARGIN + 20;
+    // Card block with hairline border
+    page.drawRectangle({ x: MARGIN, y: py, width: CONTENT_W, height: 100, borderColor: COLORS.hairStrong, borderWidth: 0.6, color: COLORS.paper });
+    drawLabel(page, 'PAYMENT', MARGIN + 16, py + 82, fonts.bold, 7, COLORS.muted, 1.8);
+    drawText(page, org.upi_vpa ? 'Pay instantly via UPI' : 'Bank transfer details on request', MARGIN + 16, py + 62, { font: fonts.bold, size: 12 });
+    if (org.upi_vpa) {
+      drawText(page, `UPI ID    ${org.upi_vpa}`, MARGIN + 16, py + 44, { font: fonts.regular, size: 9.5, color: COLORS.inkSoft });
+      drawText(page, 'Scan the code with GPay · PhonePe · Paytm · any UPI app.', MARGIN + 16, py + 28, { font: fonts.italic, size: 8.5, color: COLORS.muted });
+      try {
+        const upiUri = `upi://pay?pa=${encodeURIComponent(org.upi_vpa)}&pn=${encodeURIComponent(org.name || '')}&am=${doc.total - (doc.amountPaid || 0)}&tn=${encodeURIComponent(doc.number)}&cu=INR`;
+        const qrImg = await embedQR(pdf, upiUri);
+        page.drawImage(qrImg, { x: PAGE_W - MARGIN - 88, y: py + 8, width: 84, height: 84 });
+      } catch { /* ignore */ }
+    } else {
+      drawText(page, 'Contact the sender to receive account/UPI details.', MARGIN + 16, py + 44, { font: fonts.regular, size: 9.5, color: COLORS.muted });
+    }
   }
 
-  drawFooter(page, fonts);
+  drawFooter(page, fonts, 1, 1);
   const bytes = await pdf.save();
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
 }
@@ -245,44 +342,107 @@ export async function generateQuotePDF(quote: Quote, org: OrgBranding = {}): Pro
 export async function generateProposalPDF(p: Proposal, org: OrgBranding = {}): Promise<Blob> {
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
+
+  // ===== COVER PAGE =====
   let page = pdf.addPage([PAGE_W, PAGE_H]);
-  await drawHeader(page, fonts, org, 'PROPOSAL', p.number);
+  paintPaper(page);
+  drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
 
-  let y = PAGE_H - 130;
-  drawText(page, p.title || 'Untitled Proposal', MARGIN, y, { font: fonts.bold, size: 18 });
-  y -= 28;
-  drawText(page, 'PREPARED FOR', MARGIN, y, { font: fonts.bold, size: 9, color: COLORS.muted });
-  drawText(page, p.clientName || '—', MARGIN, y - 14, { font: fonts.bold, size: 12 });
-  drawText(page, p.clientEmail || '', MARGIN, y - 28, { font: fonts.regular, size: 10, color: COLORS.muted });
+  // Large date/year set as editorial detail
+  drawLabel(page, `PREPARED  ${fmtDate(new Date().toISOString())}`, MARGIN, PAGE_H - MARGIN - 60, fonts.bold, 7, COLORS.muted, 1.8);
 
-  drawText(page, 'PROJECT VALUE', PAGE_W - MARGIN - 150, y, { font: fonts.bold, size: 9, color: COLORS.muted });
-  drawText(page, rupees(p.totalValue), PAGE_W - MARGIN - 150, y - 16, { font: fonts.bold, size: 16, color: COLORS.accent });
+  // Massive proposal title — the hero moment
+  const titleY = PAGE_H / 2 + 40;
+  const title = p.title || 'Untitled Proposal';
+  const titleLines = wrapText(title, fonts.bold, 44, CONTENT_W);
+  let ty = titleY;
+  for (const ln of titleLines.slice(0, 3)) {
+    drawText(page, ln, MARGIN, ty, { font: fonts.bold, size: 44, color: COLORS.ink });
+    ty -= 48;
+  }
 
-  y -= 70;
+  // Single ochre rule under title — the only touch of color on the cover
+  drawLine(page, MARGIN, ty + 12, MARGIN + 90, ty + 12, COLORS.accent, 2);
 
-  for (const s of p.sections || []) {
-    if (y < 120) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, org, 'PROPOSAL', p.number); y = PAGE_H - 130; }
-    drawText(page, s.title || '', MARGIN, y, { font: fonts.bold, size: 13 });
-    y -= 18;
-    const lines = wrapText(s.content || '', fonts.regular, 10, PAGE_W - 2 * MARGIN);
-    for (const ln of lines) {
-      if (y < 80) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, org, 'PROPOSAL', p.number); y = PAGE_H - 130; }
-      drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
-      y -= 14;
+  // Prepared-for / value block near footer
+  const blockY = MARGIN + 140;
+  drawLine(page, MARGIN, blockY + 90, PAGE_W - MARGIN, blockY + 90, COLORS.hairStrong, 0.6);
+  drawLabel(page, 'PREPARED FOR', MARGIN, blockY + 70, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, p.clientName || '-', MARGIN, blockY + 50, { font: fonts.bold, size: 14 });
+  if (p.clientEmail) drawText(page, p.clientEmail, MARGIN, blockY + 34, { font: fonts.regular, size: 9.5, color: COLORS.muted });
+
+  const valueX = PAGE_W - MARGIN - 200;
+  drawLabel(page, 'PROJECT VALUE', valueX, blockY + 70, fonts.bold, 7, COLORS.muted, 1.8);
+  drawText(page, `Rs. ${amountOnly(p.totalValue)}`, valueX, blockY + 48, { font: fonts.bold, size: 22, color: COLORS.ink });
+  drawText(page, 'exclusive of taxes', valueX, blockY + 34, { font: fonts.italic, size: 8.5, color: COLORS.muted });
+
+  drawFooter(page, fonts, 1, 1 + (p.sections?.length ? 1 : 0));
+
+  // ===== SECTION PAGES =====
+  if (p.sections && p.sections.length > 0) {
+    page = pdf.addPage([PAGE_W, PAGE_H]);
+    paintPaper(page);
+    drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+    let y = PAGE_H - MARGIN - 70;
+
+    let sectionNum = 0;
+    for (const s of p.sections) {
+      sectionNum++;
+      if (y < 180) {
+        drawFooter(page, fonts, 0, 0);
+        page = pdf.addPage([PAGE_W, PAGE_H]);
+        paintPaper(page);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        y = PAGE_H - MARGIN - 70;
+      }
+      // Section number in muted large numeral, title beside it
+      drawText(page, String(sectionNum).padStart(2, '0'), MARGIN, y, { font: fonts.bold, size: 30, color: COLORS.faint });
+      drawLabel(page, 'SECTION', MARGIN + 60, y + 20, fonts.bold, 7, COLORS.muted, 1.8);
+      drawText(page, s.title || '', MARGIN + 60, y + 4, { font: fonts.bold, size: 18 });
+      y -= 22;
+      drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hair, 0.4);
+      y -= 20;
+
+      const paras = (s.content || '').split(/\n\n+/);
+      for (const para of paras) {
+        const lines = wrapText(para, fonts.regular, 10.5, CONTENT_W - 20);
+        for (const ln of lines) {
+          if (y < 80) {
+            drawFooter(page, fonts, 0, 0);
+            page = pdf.addPage([PAGE_W, PAGE_H]);
+            paintPaper(page);
+            drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+            y = PAGE_H - MARGIN - 70;
+          }
+          drawText(page, ln, MARGIN + 20, y, { font: fonts.regular, size: 10.5, color: COLORS.inkSoft });
+          y -= 15;
+        }
+        y -= 8;
+      }
+      y -= 24;
     }
-    y -= 12;
+
+    // Signature block
+    if (p.clientSignature || p.senderSignature) {
+      if (y < 140) {
+        drawFooter(page, fonts, 0, 0);
+        page = pdf.addPage([PAGE_W, PAGE_H]);
+        paintPaper(page);
+        drawMasthead(page, fonts, org, 'PROPOSAL', p.number);
+        y = PAGE_H - MARGIN - 70;
+      }
+      drawLine(page, MARGIN, y, PAGE_W - MARGIN, y, COLORS.hairStrong, 0.6);
+      y -= 20;
+      const half = CONTENT_W / 2;
+      drawLabel(page, 'CLIENT SIGNATURE', MARGIN, y, fonts.bold, 7, COLORS.muted, 1.8);
+      drawText(page, p.clientSignature || '—', MARGIN, y - 22, { font: fonts.italic, size: 14 });
+      drawLabel(page, 'AUTHORISED SIGNATORY', MARGIN + half, y, fonts.bold, 7, COLORS.muted, 1.8);
+      drawText(page, p.senderSignature || org.name || '—', MARGIN + half, y - 22, { font: fonts.italic, size: 14 });
+    }
+
+    drawFooter(page, fonts, 0, 0);
   }
 
-  if (p.clientSignature || p.senderSignature) {
-    y = Math.max(y, 140);
-    drawLine(page, MARGIN, y, PAGE_W - MARGIN, y);
-    drawText(page, 'CLIENT SIGNATURE', MARGIN, y - 16, { font: fonts.bold, size: 9, color: COLORS.muted });
-    drawText(page, p.clientSignature || '—', MARGIN, y - 32, { font: fonts.italic, size: 12 });
-    drawText(page, 'SENDER SIGNATURE', PAGE_W / 2, y - 16, { font: fonts.bold, size: 9, color: COLORS.muted });
-    drawText(page, p.senderSignature || '—', PAGE_W / 2, y - 32, { font: fonts.italic, size: 12 });
-  }
-
-  drawFooter(page, fonts);
   const bytes = await pdf.save();
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
 }
@@ -336,9 +496,10 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   const pdf = await PDFDocument.create();
   const fonts = await loadFonts(pdf);
   let page = pdf.addPage([PAGE_W, PAGE_H]);
-  await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
+  paintPaper(page);
+  drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber);
 
-  let y = PAGE_H - 130;
+  let y = PAGE_H - MARGIN - 70;
   const title = NOTICE_TITLES[d.noticeType];
   const titleLines = wrapText(title, fonts.bold, 12, PAGE_W - 2 * MARGIN);
   for (const ln of titleLines) { drawText(page, ln, MARGIN, y, { font: fonts.bold, size: 12, color: COLORS.danger }); y -= 16; }
@@ -358,7 +519,7 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   for (const para of body.split('\n\n')) {
     const lines = wrapText(para, fonts.regular, 10, PAGE_W - 2 * MARGIN);
     for (const ln of lines) {
-      if (y < 100) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); await drawHeader(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - 130; }
+      if (y < 100) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); drawMasthead(page, fonts, d.org, 'LEGAL NOTICE', d.caseNumber); y = PAGE_H - MARGIN - 70; }
       drawText(page, ln, MARGIN, y, { font: fonts.regular, size: 10 });
       y -= 14;
     }
@@ -366,11 +527,11 @@ export async function generateLegalNoticePDF(d: LegalNoticeData): Promise<Blob> 
   }
 
   y -= 20;
-  if (y < 140) { drawFooter(page, fonts); page = pdf.addPage([PAGE_W, PAGE_H]); y = PAGE_H - 130; }
+  if (y < 140) { drawFooter(page, fonts, 0, 0); page = pdf.addPage([PAGE_W, PAGE_H]); paintPaper(page); y = PAGE_H - MARGIN - 70; }
   drawText(page, 'Yours faithfully,', MARGIN, y, { font: fonts.regular, size: 10 }); y -= 30;
   drawText(page, `For and on behalf of ${d.org.name || ''}`, MARGIN, y, { font: fonts.bold, size: 10 });
 
-  drawFooter(page, fonts);
+  drawFooter(page, fonts, 0, 0);
   const bytes = await pdf.save();
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
 }
