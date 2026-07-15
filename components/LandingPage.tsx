@@ -107,7 +107,7 @@ const Nav: React.FC = () => (
 );
 
 const Hero: React.FC = () => (
-  <section className="relative pt-[122px] pb-24 px-6">
+  <section className="relative pt-[180px] pb-24 px-6">
     <div
       className="absolute inset-0 pointer-events-none opacity-40"
       style={{
