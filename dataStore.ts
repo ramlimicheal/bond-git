@@ -133,15 +133,14 @@ function useTable<T extends { id: string }>(m: Mapper<T>) {
     if (m.meter) {
       const ent = await checkEntitlement(orgId, m.meter);
       if (!ent.allowed) {
-        const err: any = new Error(
-          ent.reason === 'forbidden' ? 'Not authorised' :
-          ent.reason === 'no_subscription' ? 'No active subscription' :
-          `Plan limit reached for ${m.meter} (${ent.used}/${ent.limit}). Upgrade to continue.`
-        );
-        err.code = 'entitlement_blocked';
-        err.entitlement = ent;
         console.warn(`[${m.table}] blocked by entitlement`, ent);
-        throw err;
+        // Broadcast so a top-level listener can toast without importing here.
+        try {
+          window.dispatchEvent(new CustomEvent('billenty:entitlement-blocked', {
+            detail: { feature: m.meter, ...ent },
+          }));
+        } catch { /* SSR-safe no-op */ }
+        return null;
       }
     }
     const row = m.toRow(data, orgId);
