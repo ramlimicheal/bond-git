@@ -338,7 +338,7 @@ const Pricing: React.FC = () => {
             <span className="ml-1 text-xs bg-neutral-200 text-neutral-700 rounded-full px-2 py-0.5">Save 20%</span>
           </div>
         </div>
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
+        <div className="mt-14 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {PLANS.map(p => {
             const price = yearly
               ? '\u20b9' + Math.round(parseInt(p.price.replace(/[^0-9]/g, ''), 10) * 0.8).toLocaleString('en-IN')
@@ -346,8 +346,6 @@ const Pricing: React.FC = () => {
             const btn =
               p.variant === 'primary'
                 ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                : p.variant === 'dark'
-                ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
                 : 'bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-900';
             return (
               <div key={p.name} className="bg-[#faf9f4] rounded-3xl p-3">
