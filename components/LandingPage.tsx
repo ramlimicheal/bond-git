@@ -88,7 +88,7 @@ const FAQS = [
 ];
 
 const NAV_TOP_OFFSET = 25;
-const HERO_GAP = 80;
+const HERO_GAP = 25;
 
 const Nav: React.FC = () => {
   const ref = React.useRef<HTMLElement | null>(null);
