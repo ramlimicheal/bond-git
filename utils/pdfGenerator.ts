@@ -1,10 +1,10 @@
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib';
 import QRCode from 'qrcode';
 import type { Invoice, Proposal, Quote } from '../types';
 
 // ===== Editorial design tokens =====
 // Monochrome ink on warm paper. One micro-accent used sparingly.
-const COLORS = {
+const DEFAULT_COLORS = {
   ink: rgb(0.07, 0.07, 0.08),          // near-black body
   inkSoft: rgb(0.20, 0.20, 0.22),      // secondary
   muted: rgb(0.48, 0.48, 0.52),        // labels
@@ -17,6 +17,27 @@ const COLORS = {
   danger: rgb(0.72, 0.12, 0.12),
   white: rgb(1, 1, 1),
 };
+
+// Mutable palette used by the generator. Each PDF build resets it based on the
+// caller's OrgBranding so brand accent color flows through every draw call.
+let COLORS = { ...DEFAULT_COLORS };
+
+function hexToRgb(hex?: string | null) {
+  if (!hex) return null;
+  const h = hex.trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
+
+function applyBrand(org: OrgBranding) {
+  COLORS = { ...DEFAULT_COLORS };
+  const accent = hexToRgb(org.brand_accent);
+  if (accent) COLORS.accent = accent;
+}
 
 const MARGIN = 56;
 const PAGE_W = 595.28; // A4
@@ -56,6 +77,27 @@ interface OrgBranding {
   email?: string | null;
   phone?: string | null;
   upi_vpa?: string | null;
+  logo_url?: string | null;      // Fetchable URL (signed URL or data URL) for the logo image.
+  brand_accent?: string | null;  // Hex color, e.g. "#c98a26".
+}
+
+// Try to load and embed the org logo. Returns null if not available/decodable.
+async function embedLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    // Sniff format from magic bytes so we call the right embedder.
+    const isPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+    const isJpg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    if (isPng) return await pdf.embedPng(buf);
+    if (isJpg) return await pdf.embedJpg(buf);
+    // Last-ditch: try PNG.
+    try { return await pdf.embedPng(buf); } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function loadFonts(pdf: PDFDocument) {
