@@ -12,7 +12,6 @@ import {
   Gavel,
   Activity,
   Bot,
-  Users,
   type LucideIcon,
 } from 'lucide-react';
 import dashboardImg from '../src/assets/landing-dashboard.jpg';
