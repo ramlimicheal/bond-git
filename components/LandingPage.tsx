@@ -13,12 +13,12 @@ const NAV = [
 const LOGOS = ['Grammarly', 'Mailchimp', 'Framer', 'Gumroad', 'Webflow', 'GitHub', 'Shopify', 'Notion'];
 
 const FEATURES = [
-  { title: 'GST-Ready Invoicing', desc: 'CGST, SGST, IGST split automatically. Place of supply, HSN/SAC — handled per invoice.' },
-  { title: 'AI Proposals & Quotes', desc: 'Draft studio-grade proposals in seconds. Polish scope, terms, and pricing with one click.' },
-  { title: 'Legal Backbone', desc: 'Every overdue invoice ships with an auto-drafted demand notice a real lawyer can sign.' },
-  { title: 'Client Portal', desc: 'Clients view, e-sign and pay through a branded portal — no more email ping-pong.' },
-  { title: 'UPI & Cards', desc: 'Collect via UPI, cards, and net banking. Reconciliation is automatic, not a spreadsheet.' },
-  { title: 'Lawyer Marketplace', desc: 'On-demand Indian lawyers to send notices, chase payments, and escalate when needed.' },
+  { icon: '🧾', title: 'GST-Ready Invoicing', desc: 'CGST, SGST, IGST split automatically. Place of supply, HSN/SAC — handled per invoice.' },
+  { icon: '✨', title: 'AI Proposals & Quotes', desc: 'Draft studio-grade proposals in seconds. Polish scope, terms, and pricing with one click.' },
+  { icon: '⚖️', title: 'Legal Backbone', desc: 'Every overdue invoice ships with an auto-drafted demand notice a real lawyer can sign.' },
+  { icon: '🔗', title: 'Client Portal', desc: 'Clients view, e-sign and pay through a branded portal — no more email ping-pong.' },
+  { icon: '💳', title: 'UPI & Cards', desc: 'Collect via UPI, cards, and net banking. Reconciliation is automatic, not a spreadsheet.' },
+  { icon: '👩‍⚖️', title: 'Lawyer Marketplace', desc: 'On-demand Indian lawyers to send notices, chase payments, and escalate when needed.' },
 ];
 
 const STEPS = [
@@ -63,14 +63,14 @@ const Hero: React.FC = () => (
         WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
       }}
     />
-    <div className="relative max-w-6xl mx-auto grid md:grid-cols-[1.4fr_1fr] gap-12 items-center pt-8">
+    <div className="relative max-w-6xl mx-auto grid md:grid-cols-[1.55fr_1fr] gap-10 items-end pt-8">
       <div>
-        <h1 className="font-display text-5xl md:text-7xl leading-[1.02] tracking-tight text-neutral-900">
-          Revenue <em className="font-serif italic font-normal" style={{ fontFamily: '"Instrument Serif", "DM Serif Display", Georgia, serif' }}>Automation</em> for<br />
-          India&rsquo;s Design Studios
+        <h1 className="text-[56px] md:text-[88px] leading-[0.98] tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+          Revenue <em className="italic">Automation</em><br />
+          for India&rsquo;s Studios
         </h1>
       </div>
-      <div className="md:pt-6">
+      <div className="md:pb-6">
         <p className="text-neutral-600 text-lg leading-relaxed max-w-md">
           Bill, collect, and enforce payment automatically. GST-compliant invoices, AI proposals, and lawyer-signed demand notices — all in one platform.
         </p>
@@ -118,15 +118,16 @@ const DashboardShowcase: React.FC = () => (
 const Features: React.FC = () => (
   <section id="features" className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
-      <p className="text-sm font-medium text-neutral-500 mb-3">Features</p>
-      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
-        Everything you need to <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>get paid</em>
+      <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">Features</p>
+      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Everything you need to <em className="italic">get paid</em>
       </h2>
       <p className="mt-4 text-neutral-600 max-w-2xl">One platform to bill clients, collect payments, and enforce them — built for Indian designers.</p>
-      <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-8 border-t border-neutral-200">
-        {FEATURES.map((f, i) => (
-          <div key={f.title} className={`p-8 border-b border-neutral-200 ${i % 3 !== 2 ? 'lg:border-r' : ''} ${i % 2 !== 1 ? 'md:border-r lg:border-r' : ''}`}>
-            <h3 className="font-display text-xl font-semibold text-neutral-900 mb-2">{f.title}</h3>
+      <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {FEATURES.map((f) => (
+          <div key={f.title} className="p-8 rounded-2xl border border-neutral-200 bg-white hover:shadow-md transition-shadow">
+            <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-5">{f.icon}</div>
+            <h3 className="font-display text-lg font-semibold text-neutral-900 mb-2">{f.title}</h3>
             <p className="text-neutral-600 text-sm leading-relaxed">{f.desc}</p>
           </div>
         ))}
@@ -138,9 +139,9 @@ const Features: React.FC = () => (
 const HowItWorks: React.FC = () => (
   <section id="how" className="py-24 px-6 bg-neutral-50">
     <div className="max-w-6xl mx-auto">
-      <p className="text-sm font-medium text-neutral-500 mb-3">How it works</p>
-      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
-        Live in <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>three</em> simple steps
+      <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">How it works</p>
+      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Live in <em className="italic">three</em> simple steps
       </h2>
       <div className="mt-14 grid md:grid-cols-3 gap-8">
         {STEPS.map(s => (
@@ -158,9 +159,9 @@ const HowItWorks: React.FC = () => (
 const Testimonials: React.FC = () => (
   <section className="py-24 px-6 bg-white">
     <div className="max-w-6xl mx-auto">
-      <p className="text-sm font-medium text-neutral-500 mb-3">Testimonials</p>
-      <h2 className="font-display text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl">
-        Loved by <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>design studios</em>
+      <p className="text-xs font-semibold text-orange-600 tracking-widest uppercase mb-3">Testimonials</p>
+      <h2 className="text-4xl md:text-5xl tracking-tight text-neutral-900 max-w-2xl" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Loved by <em className="italic">design studios</em>
       </h2>
       <div className="mt-14 grid md:grid-cols-3 gap-6">
         {TESTIMONIALS.map(t => (
@@ -183,8 +184,8 @@ const Testimonials: React.FC = () => (
 const CTA: React.FC = () => (
   <section id="pricing" className="py-24 px-6 bg-neutral-50">
     <div className="max-w-4xl mx-auto text-center">
-      <h2 className="font-display text-4xl md:text-6xl tracking-tight text-neutral-900">
-        Ready to <em className="italic font-normal" style={{ fontFamily: '"Instrument Serif", Georgia, serif' }}>automate</em> your revenue?
+      <h2 className="text-4xl md:text-6xl tracking-tight text-neutral-900" style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400 }}>
+        Ready to <em className="italic">automate</em> your revenue?
       </h2>
       <p className="mt-6 text-neutral-600 text-lg">Start your 14-day free trial. No credit card required. Cancel anytime.</p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
